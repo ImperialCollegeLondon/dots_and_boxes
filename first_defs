@@ -1,5 +1,6 @@
 import data.multiset
 
+@[derive decidable_eq]
 structure simple_loony_endgame :=
 (three_chains : ℕ) -- number of three-chains
 (four_loops : ℕ)
