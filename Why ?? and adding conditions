@@ -109,7 +109,7 @@ else 4
 
 def cv_G (G : simple_loony_endgame) := fcv_G G + tb_G G
 
-definition v_G (G : simple_loony_endgame) (n : nat ≥ 4) (m : 2 ∣ nat ≥ 8): simple_loony_endgame → nat  
+definition v_G (G : simple_loony_endgame): simple_loony_endgame → nat  
 | empty_game := 0
 | (game_three_succ G) := (min (v_G G - 3) (2 - 3 - v_G G))
 | (game_four_succ G) := (min (v_G G - 4) (- v_G G))
