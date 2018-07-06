@@ -133,4 +133,13 @@ def v_G (G : simple_loony_endgame) : simple_loony_endgame → nat
 | (game_four_succ G) := (min (v_G G - 4) (- v_G G))
 | (game_six_succ G) := (min (v_G G - 6) (4 - 6 - v_G G))
 | (game_long_chain_succ G n) := (min ((v_G G) - n) (2 - n - v_G G))
-| (game_long_loop_succ G m) := (min ((v_G G) - m) (4 - m - v_G G))-/
+| (game_long_loop_succ G m) := (min ((v_G G) - m) (4 - m - v_G G))
+
+def v_G (G : simple_loony_endgame) (n m : nat) (Hn : n  ≥ 4 ) (Hm : n ≥ 8 ) (Pm : 2 ∣ n): simple_loony_endgame → nat  
+| empty_game := 0
+| (game_three_succ G) := (min (v_G G - 3) (2 - 3 - (v_G G))
+| (game_four_succ G) := (min (v_G G - 4) (- (v_G G))
+| (game_six_succ G) := (min (v_G G - 6) (4 - 6 - v_G G))
+| (game_long_chain_succ G n Hn) := (min ((v_G G) - n) (2 - n - v_G G))
+| (game_long_loop_succ G m Hm Pm) := (min ((v_G G) - m) (4 - m - v_G G))
+-/
