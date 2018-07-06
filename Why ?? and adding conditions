@@ -115,4 +115,4 @@ definition v_G (G : simple_loony_endgame) (n : nat ≥ 4) (m : 2 ∣ nat ≥ 8):
 | (game_four_succ G) := (min (v_G G - 4) (- v_G G))
 | (game_six_succ G) := (min (v_G G - 6) (4 - 6 - v_G G))
 | (game_long_chain_succ G n) := (min ((v_G G) - n) (2 - n - v_G G))
-| (game_long_loop_succ G n) := (min ((v_G G) - m) (4 - m - v_G G))
+| (game_long_loop_succ G m) := (min ((v_G G) - m) (4 - m - v_G G))
