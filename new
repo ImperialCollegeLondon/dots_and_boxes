@@ -59,30 +59,37 @@ definition game_six_succ (G : simple_loony_endgame): simple_loony_endgame :=
 }
 
 
+lemma add_long_all_long (α  : multiset nat) (n m : nat) : (∀ x ∈ α , x ≥ m) → (n ≥ m) → (∀ x ∈ multiset.cons n α, x ≥ m):=
+begin
+intros a b c d, rw[multiset.mem_cons] at d, cases d, rw[d], exact b, finish,
+end
 
-definition game_long_chain_succ (G : simple_loony_endgame) (n : nat ≥ 4 ): simple_loony_endgame :=
+lemma add_even_all_even (α  : multiset nat) (n : nat) : (∀ x ∈ α , 2 ∣ x) → (2 ∣ n) → (∀ x ∈ multiset.cons n α, 2 ∣ x):=
+begin
+intros a b c d, rw[multiset.mem_cons] at d, cases d, rw[d], exact b, finish,
+end
+
+definition game_long_chain_succ (G : simple_loony_endgame) (n : nat) (Hn : n  ≥ 4 ): simple_loony_endgame :=
 { three_chains := simple_loony_endgame.three_chains G,
   four_loops := simple_loony_endgame.four_loops G,
   six_loops := simple_loony_endgame.six_loops G,
-  long_chains := add_monoid.smul (simple_loony_endgame.long_chains G) n ,
-  long_chains_are_long := begin intros,   end ,
+  long_chains := (multiset.cons n (simple_loony_endgame.long_chains G)) ,
+  long_chains_are_long := add_long_all_long (simple_loony_endgame.long_chains G) n 4 (simple_loony_endgame.long_chains_are_long G) Hn,
   long_loops := simple_loony_endgame.long_loops G,
   long_loops_are_long := simple_loony_endgame.long_loops_are_long G,
   long_loops_are_even := simple_loony_endgame.long_loops_are_even G 
 }
 
-definition game_long_loop_succ (G : simple_loony_endgame) (n : 2 ∣ nat ≥ 8): simple_loony_endgame :=
+definition game_long_loop_succ (G : simple_loony_endgame) (n : nat) (Hn : n ≥ 8 ) (Pn : 2 ∣ n) : simple_loony_endgame :=
 { three_chains := simple_loony_endgame.three_chains G,
   four_loops := simple_loony_endgame.four_loops G,
   six_loops := simple_loony_endgame.six_loops G,
   long_chains := simple_loony_endgame.long_chains G,
   long_chains_are_long := simple_loony_endgame.long_chains_are_long G ,
-  long_loops := add_monoid.smul (simple_loony_endgame.long_loops G) n,
-  long_loops_are_long := sorry,
-  long_loops_are_even := sorry 
+  long_loops := multiset.cons n (simple_loony_endgame.long_loops G) ,
+  long_loops_are_long := add_long_all_long (simple_loony_endgame.long_loops G) n 8 (simple_loony_endgame.long_loops_are_long G) Hn,
+  long_loops_are_even := add_even_all_even (simple_loony_endgame.long_loops G) n (simple_loony_endgame.long_loops_are_even G) Pn 
 }
-
-
 
 
 def distel (m : multiset nat): nat := multiset.card (multiset.erase_dup (m))
@@ -107,12 +114,23 @@ else if multiset.card (simple_loony_endgame.long_loops G) + simple_loony_endgame
 else if simple_loony_endgame.long_chains G = multiset.zero then 6
 else 4
 
+#check game_three_succ empty_game
+
+
+
 def cv_G (G : simple_loony_endgame) := fcv_G G + tb_G G
 
-definition v_G (G : simple_loony_endgame): simple_loony_endgame → nat  
+
+
+set_option trace.eqn_compiler.elim_match true
+def v_G (G : simple_loony_endgame) : simple_loony_endgame → nat  
 | empty_game := 0
-| (game_three_succ G) := (min (v_G G - 3) (2 - 3 - v_G G))
+| (game_three_succ G) := 1
+
+
+
+/-| (game_three_succ G) := (min (v_G G - 3) (2 - 3 - (v_G G))
 | (game_four_succ G) := (min (v_G G - 4) (- v_G G))
 | (game_six_succ G) := (min (v_G G - 6) (4 - 6 - v_G G))
 | (game_long_chain_succ G n) := (min ((v_G G) - n) (2 - n - v_G G))
-| (game_long_loop_succ G m) := (min ((v_G G) - m) (4 - m - v_G G))
+| (game_long_loop_succ G m) := (min ((v_G G) - m) (4 - m - v_G G))-/
