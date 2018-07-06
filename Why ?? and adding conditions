@@ -71,7 +71,7 @@ definition game_long_chain_succ (G : simple_loony_endgame) (n : nat ≥ 4 ): sim
   long_loops_are_even := simple_loony_endgame.long_loops_are_even G 
 }
 
-definition game_long_loop_succ (G : simple_loony_endgame) (n : nat ≥ 8): simple_loony_endgame :=
+definition game_long_loop_succ (G : simple_loony_endgame) (n : 2 ∣ nat ≥ 8): simple_loony_endgame :=
 { three_chains := simple_loony_endgame.three_chains G,
   four_loops := simple_loony_endgame.four_loops G,
   six_loops := simple_loony_endgame.six_loops G,
@@ -109,10 +109,10 @@ else 4
 
 def cv_G (G : simple_loony_endgame) := fcv_G G + tb_G G
 
-definition v_G (G : simple_loony_endgame) (n : nat ≥ 4) (m : nat ≥ 8) (2 | m ): simple_loony_endgame → nat  
+definition v_G (G : simple_loony_endgame) (n : nat ≥ 4) (m : 2 ∣ nat ≥ 8): simple_loony_endgame → nat  
 | empty_game := 0
 | (game_three_succ G) := (min (v_G G - 3) (2 - 3 - v_G G))
 | (game_four_succ G) := (min (v_G G - 4) (- v_G G))
 | (game_six_succ G) := (min (v_G G - 6) (4 - 6 - v_G G))
 | (game_long_chain_succ G n) := (min ((v_G G) - n) (2 - n - v_G G))
-| (game_long_loop_succ G n) := (min ((v_G G) - n) (4 - n - v_G G))
+| (game_long_loop_succ G n) := (min ((v_G G) - m) (4 - m - v_G G))
