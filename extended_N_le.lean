@@ -90,29 +90,11 @@ def multiset.N_min (s : multiset ℕ) : ℕ := option_N_to_N $ multiset.option_N
 
 -- note that min of empty list is zero (because option_N_to_N sends infinity to zero)
 
-/-
-multiset.strong_induction_on :
-  Π {α : Type u_1} {p : multiset α → Sort u_2} (s : multiset α),
-    (Π (s : multiset α), (Π (t : multiset α), t < s → p t) → p s) → p s
-
--/
-
 -- Given a multiset s of chain lengths (each of which need to be >= 3 for this
 -- function to make sense) this returns the value (to the person whose move it is not)
 -- of the game.
 
+def chain_value (s0 : multiset ℕ) : ℕ := multiset.strong_induction_on s0 $ λ s H,multiset.N_min $ multiset.pmap
+  (λ (a : ℕ) (h : a ∈ s),a - 2 + int.nat_abs (2 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id)
 
--- #check @multiset.card_erase_of_mem 
-
-#print multiset.strong_induction_on
-/-
-multiset.card_erase_of_mem :
-  ∀ {α : Type u_1} [_inst_1 : decidable_eq α] {a : α} {s : multiset α},
-    a ∈ s → multiset.card (multiset.erase s a) = nat.pred (multiset.card s)
--/
-
-def chain_value : multiset ℕ → ℕ := λ s0,
-multiset.strong_induction_on s0 (λ s H,multiset.N_min (multiset.map (_) s))
-
--- 
--- f(L) = min {a-2+|2-f(L.erase a)| for a ∈ L}
+#eval (chain_value {4,5,6}) -- 7
