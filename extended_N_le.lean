@@ -98,3 +98,39 @@ def chain_value (s0 : multiset ℕ) : ℕ := multiset.strong_induction_on s0 $ �
   (λ (a : ℕ) (h : a ∈ s),a - 2 + int.nat_abs (2 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id)
 
 #eval (chain_value {4,5,6}) -- 7
+#eval chain_value {3,3,3,3,3,3,3,3}
+
+def loop_value (s0 : multiset ℕ) : ℕ := multiset.strong_induction_on s0 $ λ s H,multiset.N_min $ multiset.pmap
+  (λ (a : ℕ) (h : a ∈ s),a - 4 + int.nat_abs (4 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id)
+
+#eval loop_value {4,4,4,4}
+
+def chain_move_values (s0 : multiset ℕ) : multiset ℕ := 
+multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 2 + int.nat_abs (2 - chain_value (s0.erase a))) s0 (λ a,id)
+
+#eval chain_move_values {3,4,5,6,3,3,3,3}
+
+def loop_move_values (s0 : multiset ℕ) : multiset ℕ := 
+multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 4 + int.nat_abs (4 - loop_value (s0.erase a))) s0 (λ a,id)
+
+@[derive decidable_eq]
+structure sle' :=
+(long_chains : multiset ℕ)
+(long_chains_are_long : ∀ x ∈ long_chains, x ≥ 3)
+(long_loops : multiset ℕ)
+(long_loops_are_long_and_even : ∀ x ∈ long_loops, x ≥ 4 ∧ 2 ∣ x)
+
+definition value (G : sle') := multiset.N_min (chain_move_values G.long_chains + loop_move_values G.long_loops)
+
+definition G : sle' :=
+{ long_chains := {3,3,3},
+  long_chains_are_long := dec_trivial,
+  long_loops := {4,4,4},
+  long_loops_are_long_and_even := dec_trivial
+}
+
+#eval chain_move_values G.long_chains
+
+#eval value G -- gives 1, which looks right
+
+-- It would be easy to adapt this definition to the more complex simple loony endgame structure.
