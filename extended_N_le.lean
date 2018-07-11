@@ -94,7 +94,8 @@ def multiset.N_min (s : multiset ℕ) : ℕ := option_N_to_N $ multiset.option_N
 -- function to make sense) this returns the value (to the person whose move it is not)
 -- of the game.
 
-def chain_value (s0 : multiset ℕ) : ℕ := multiset.strong_induction_on s0 $ λ s H,multiset.N_min $ multiset.pmap
+def chain_value (s0 : multiset ℕ) : ℕ := 
+multiset.strong_induction_on s0 $ λ s H,multiset.N_min $ multiset.pmap
   (λ (a : ℕ) (h : a ∈ s),a - 2 + int.nat_abs (2 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id)
 
 #eval (chain_value {4,5,6}) -- 7
@@ -105,14 +106,6 @@ def loop_value (s0 : multiset ℕ) : ℕ := multiset.strong_induction_on s0 $ λ
 
 #eval loop_value {4,4,4,4}
 
-def chain_move_values (s0 : multiset ℕ) : multiset ℕ := 
-multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 2 + int.nat_abs (2 - chain_value (s0.erase a))) s0 (λ a,id)
-
-#eval chain_move_values {3,4,5,6,3,3,3,3}
-
-def loop_move_values (s0 : multiset ℕ) : multiset ℕ := 
-multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 4 + int.nat_abs (4 - loop_value (s0.erase a))) s0 (λ a,id)
-
 @[derive decidable_eq]
 structure sle' :=
 (long_chains : multiset ℕ)
@@ -120,17 +113,81 @@ structure sle' :=
 (long_loops : multiset ℕ)
 (long_loops_are_long_and_even : ∀ x ∈ long_loops, x ≥ 4 ∧ 2 ∣ x)
 
-definition value (G : sle') := multiset.N_min (chain_move_values G.long_chains + loop_move_values G.long_loops)
+definition value_aux (C : multiset ℕ) (L : multiset ℕ) : ℕ := 
+begin
+  revert L,
+  refine multiset.strong_induction_on C _,
+  intros C2 HC,
+  intro L,
+  refine multiset.strong_induction_on L _,
+  intros L2 HL,
+  refine multiset.N_min _,
+  refine multiset.add _ _,
+  { -- chains
+    exact multiset.pmap 
+      (λ a (h : a ∈ C2), a - 2 + int.nat_abs (2 - HC (C2.erase a) (multiset.erase_lt.2 h) L2))
+      C2 (λ _,id),
+  },
+  { -- loops 
+    exact multiset.pmap 
+      (λ a (h : a ∈ L2), a - 4 +int.nat_abs (4 - HL (L2.erase a) (multiset.erase_lt.2 h)))
+      L2 (λ _,id)
+  }
+end
+
+--#check @multiset.pmap 
+/-
+multiset.pmap :
+  Π {α : Type u_1} {β : Type u_2} {p : α → Prop},
+    (Π (a : α), p a → β) → 
+      Π (s : multiset α), (∀ (a : α), a ∈ s → p a) → 
+        multiset β
+-/
+--#check @multiset.strong_induction_on 
+
+/-
+if C = ∅ then loop_value L else
+multiset.strong_induction_on C 
+(λ s H,multiset.N_min 
+  (multiset.pmap
+  (λ (a : ℕ) (h : a ∈ s),a - 2 + int.nat_abs (2 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id))
+)
+
+NO!
+definition value_loop (C : multiset ℕ) (L : multiset ℕ) : ℕ := 
+if L = ∅ then chain_value C else
+multiset.strong_induction_on L 
+(λ s H,multiset.N_min 
+  (multiset.pmap
+  (λ (a : ℕ) (h : a ∈ s),a - 4 + int.nat_abs (4 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id))
+)
+
+definition value (G : sle') := min (value_chain G.long_chains G.long_loops) (value_loop G.long_chains G.long_loops)
+
+-- this does not work!
+-/
 
 definition G : sle' :=
-{ long_chains := {3,3,3},
+{ long_chains := {3,3,3,3,8},
   long_chains_are_long := dec_trivial,
-  long_loops := {4,4,4},
+  long_loops := {4},
   long_loops_are_long_and_even := dec_trivial
 }
 
-#eval chain_move_values G.long_chains
+definition value (G : sle') := value_aux G.long_chains G.long_loops
 
-#eval value G -- gives 1, which looks right
+#eval value G -- gives 0, which looks right
 
 -- It would be easy to adapt this definition to the more complex simple loony endgame structure.
+
+#exit 
+
+/-
+def chain_move_values (s0 : multiset ℕ) : multiset ℕ := 
+multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 2 + int.nat_abs (2 - chain_value (s0.erase a))) s0 (λ a,id)
+
+#eval chain_move_values {3,4,5,6,3,3,3,3}
+
+def loop_move_values (s0 : multiset ℕ) : multiset ℕ := 
+multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 4 + int.nat_abs (4 - loop_value (s0.erase a))) s0 (λ a,id)
+-/
