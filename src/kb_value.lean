@@ -46,6 +46,7 @@ definition value (G : sle') := value_aux G.long_chains G.long_loops
 definition size (G : sle') : ℕ := multiset.card G.long_chains + multiset.card G.long_loops 
 
 #exit 
+
 /-
 definition multiset.sum {α : Type} [has_add α] [has_zero α] (s : multiset α) : α := multiset.fold (+) 0 s 
 def fcv_G (G : sle') := 
