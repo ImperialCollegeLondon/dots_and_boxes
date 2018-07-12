@@ -230,9 +230,7 @@ def val : simple_loony_endgame → with_top ℕ
   (λ f, have size f.1 < size e := f.2, (val f.1 : with_top ℕ))
 using_well_founded {rel_tac := λ _ _, `[exact ⟨_, measure_wf size⟩]}
 
-
 def distel (m : multiset nat): nat := multiset.card (multiset.erase_dup (m))
-
 
 def fcv_G (G : simple_loony_endgame) :=
 simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
@@ -253,23 +251,14 @@ else 4
 
 #check game_long_loop_succ empty_game 8 
 
-
 #check min 1 2
 
 def v_G (G : simple_loony_endgame) := fcv_G G + tb_G G
 
-
-
-
-
-
 def cv_G (G : simple_loony_endgame) := fcv_G G + tb_G G
-
-
 
 ---------------------------------------------------------------------------------------------------------------
 --------------------------------------------------theorems-----------------------------------------------------
-
 
 lemma one_comp_case (G : simple_loony_endgame) : ((size_G G) = 1) → (cv_G G = v_G G) := sorry
 
