@@ -1,4 +1,4 @@
-import extended_N_le
+import extended_N_le tactic.ring
 
 -- Given a multiset s of chain lengths (each of which need to be >= 3 for this
 -- function to make sense) this returns the value (to the person whose move it is not)
@@ -34,7 +34,7 @@ definition value_aux (C : multiset ℕ) : multiset ℕ → ℕ :=
     )
   ))
 
-definition G : sle' :=
+definition G0 : sle' :=
 { long_chains := {3,3,3,3,8},
   long_chains_are_long := dec_trivial,
   long_loops := {4},
@@ -43,7 +43,121 @@ definition G : sle' :=
 
 definition value (G : sle') := value_aux G.long_chains G.long_loops
 
-definition size (G : sle') : ℕ := multiset.card G.long_chains + multiset.card G.long_loops 
+definition size_aux (C L : multiset ℕ) := multiset.card C + multiset.card L 
+
+definition size (G : sle') : ℕ := size_aux G.long_chains G.long_loops
+
+definition fcv_aux (C L : multiset ℕ) : ℤ := ↑(multiset.sum C + multiset.sum L) 
+  - 4 * multiset.card C - 8 * multiset.card L
+
+definition fcv (G : sle') : ℤ := fcv_aux G.long_chains G.long_loops
+
+-- Chris and Simon decidability thing
+instance decidable_exists_multiset {α : Type*} (s : multiset α) (p : α → Prop) [decidable_pred p] :
+  decidable (∃ x ∈ s, p x) := quotient.rec_on s
+list.decidable_exists_mem (λ a b h, subsingleton.elim _ _)
+
+instance (C : multiset ℕ) : decidable (∃ a : ℕ, a ≥ 4 ∧ a ∈ C) :=
+suffices this : decidable (∃ a ∈ C, a ≥ 4),
+by { resetI, apply @decidable_of_iff _ _ _ this, apply exists_congr, intro, tauto },
+by { apply_instance }
+
+definition tb_aux (C L : multiset ℕ) : ℕ := if (C = 0 ∧ L = 0) then 0 else
+  if L = 0 then 4 else
+  if C = 0 then 8 else
+  if ∃ a : ℕ, a ≥ 4 ∧ a ∈ C then 4 else 
+  6
+
+definition tb (G : sle') : ℕ := tb_aux G.long_chains G.long_loops
+
+definition cv_aux (C L : multiset ℕ) : ℤ := fcv_aux C L + tb_aux C L
+definition cv (G : sle') : ℤ := fcv G + tb G
+
+open nat 
+
+definition empty_game : sle' := {long_chains := ∅,long_chains_are_long := dec_trivial, 
+  long_loops := ∅, long_loops_are_long_and_even := dec_trivial}
+
+lemma cv_zero : cv empty_game = 0 := dec_trivial 
+
+definition single_chain (c : ℕ) (Hc : c ≥ 3) : sle' :=
+{ long_chains := {c},
+  long_chains_are_long := λ x H, begin
+  rwa multiset.mem_singleton.1 H,
+  end ,
+  long_loops := ∅,
+  long_loops_are_long_and_even := dec_trivial
+}
+
+@[simp] lemma multiset.sum_singleton {α : Type} [add_comm_monoid α]
+(c : α) : multiset.sum (c :: 0) = c := begin rw multiset.sum_cons c 0,exact add_zero c end
+
+@[simp] lemma multiset.sum_singleton' {α : Type} [add_comm_monoid α]
+(c : α) : multiset.sum {c} = c := multiset.sum_singleton c 
+
+lemma cv_one_chain (c : ℕ) : cv_aux {c} 0 = c :=
+begin
+  unfold cv_aux tb_aux,
+  split_ifs,
+  { exfalso, apply multiset.singleton_ne_zero c,exact h.left},
+  unfold fcv_aux,
+  rw [multiset.sum_zero,multiset.card_zero],
+  simp,ring 
+end 
+
+lemma cv_one_loop (l : ℕ) : cv_aux 0 {l} = l :=
+begin
+  unfold cv_aux tb_aux,
+  split_ifs,
+  { exfalso, apply multiset.singleton_ne_zero l,exact h.2},
+  { exfalso, apply multiset.singleton_ne_zero l,exact h_1},
+  unfold fcv_aux,
+  rw [multiset.sum_zero,multiset.card_zero],
+  simp,ring
+end
+
+-- TOD
+--lemma v_one_chain (c : ℕ) : value_aux ...
+
+lemma sum_one {a b : ℕ} : a + b = 1 → (a = 0 ∧ b = 1) ∨ (a = 1 ∧ b = 0) :=
+begin
+  intro H,
+  cases b,
+  { rw add_zero at H,rw H,right,simp},
+  cases b,
+  { left,split,change _ = 0 + 1 at H,exact add_right_cancel H,refl},
+  change succ (succ (a + b)) = succ 0 at H,
+  exfalso,exact nat.no_confusion (nat.succ_inj H),
+end 
+
+lemma one_comp_case (G : sle') : ((size G) = 1) → (cv G = value G) := 
+begin
+  intro H,
+  have H₂ := sum_one H,
+  cases H₂,
+  { have H₃ : G.long_chains = ∅ := multiset.card_eq_zero.1 H₂.left,
+    have H₄ : G.long_loops ≠ ∅,
+      intro H,rw multiset.card_eq_zero.2 H₃ at H₂,rw H at H₂,have H₄ : 0 = 1 := H₂.right,
+      revert H₄,simp,
+    unfold cv tb tb_aux,
+    split_ifs,
+    { exact false.elim (H₄ h.right)},
+    { unfold fcv,
+      
+    },
+    {sorry}
+
+  }
+end 
+
+#check multiset.single
+
+
+lemma loop_and_three_chain_case (G : simple_loony_endgame) : (G.three_chains = 1) → (multiset.card(all_loops G) = 1 ) → (cv_G G = value G) :=
+sorry
+
+lemma three_point_one (G : simple_loony_endgame) : ((size_G G) > 0) → (G.three_chains = 0) → (G.four_loops = 0) →  (value G ≥ 2) := sorry
+
 
 #exit 
 
@@ -61,5 +175,16 @@ lemma one_comp_case (G : sle') : (size G) = 1) → (cv_G G = v_G G) := sorry
 
 #eval value G -- gives 0, which looks right
 
-#eval multiset.fold (nat.add) 0 {3,3,4,5}
+-/
+
+/- Ellen Challenges!
+
+lemma one_comp_case (G : simple_loony_endgame) : ((size_G G) = 1) → (cv_G G = v_G G) := sorry
+
+lemma loop_and_three_chain_case (G : simple_loony_endgame) : (G.three_chains = 1) → (multiset.card(all_loops G) = 1 ) → (cv_G G = value G) :=
+sorry
+
+lemma three_point_one (G : simple_loony_endgame) : ((size_G G) > 0) → (G.three_chains = 0) → (G.four_loops = 0) →  (value G ≥ 2) := sorry
+
+
 -/
