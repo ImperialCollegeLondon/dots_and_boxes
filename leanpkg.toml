@@ -1,8 +1,8 @@
 [package]
 name = "dots_and_boxes"
 version = "0.1"
-lean_version = "nightly-2018-04-20"
+lean_version = "3.4.1"
 path = "src"
 
 [dependencies]
-mathlib = {git = "https://github.com/leanprover/mathlib", rev = "e5d5abd9fe844b1c40267b937b8e0fbabd663d39"}
+mathlib = {git = "https://github.com/leanprover/mathlib", rev = "b1a314fc495ed540722458469568e1641dc0b5c4"}
