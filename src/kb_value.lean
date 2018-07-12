@@ -116,8 +116,20 @@ begin
   simp,ring
 end
 
--- TOD
---lemma v_one_chain (c : ℕ) : value_aux ...
+-- I don't have the tools for this yet
+lemma v_empty : value_aux 0 0 = 0 :=
+begin
+unfold value_aux,
+dsimp,
+admit
+end 
+
+-- I don't have the tools for this yet
+lemma v_one_chain (c : ℕ) : value_aux {c} 0 = c :=
+begin
+unfold value_aux,
+sorry 
+end
 
 lemma sum_one {a b : ℕ} : a + b = 1 → (a = 0 ∧ b = 1) ∨ (a = 1 ∧ b = 0) :=
 begin
@@ -143,14 +155,13 @@ begin
     split_ifs,
     { exact false.elim (H₄ h.right)},
     { unfold fcv,
-      
+      sorry
     },
-    {sorry}
-
-  }
+  },
+  sorry
 end 
 
-#check multiset.single
+#exit 
 
 
 lemma loop_and_three_chain_case (G : simple_loony_endgame) : (G.three_chains = 1) → (multiset.card(all_loops G) = 1 ) → (cv_G G = value G) :=
@@ -159,7 +170,6 @@ sorry
 lemma three_point_one (G : simple_loony_endgame) : ((size_G G) > 0) → (G.three_chains = 0) → (G.four_loops = 0) →  (value G ≥ 2) := sorry
 
 
-#exit 
 
 /-
 definition multiset.sum {α : Type} [has_add α] [has_zero α] (s : multiset α) : α := multiset.fold (+) 0 s 
