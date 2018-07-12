@@ -116,20 +116,39 @@ begin
   simp,ring
 end
 
--- I don't have the tools for this yet
-lemma v_empty : value_aux 0 0 = 0 :=
+open multiset 
+#check @strong_induction_on 
+#print prefix multiset.strong_induction_on 
+
+theorem strong_induction_eq {α : Type} {p : multiset α → Sort*}
+  (s : multiset α) (H) : @strong_induction_on _ p s H =
+    H s (λ t h, @strong_induction_on _ p t H) :=
+by rw [strong_induction_on]
+
+@[simp] lemma v_empty : value_aux 0 0 = 0 :=
 begin
-unfold value_aux,
-dsimp,
-admit
+  unfold value_aux, -- strong_induction hell
+  rw strong_induction_eq, -- goal now one page long
+  rw strong_induction_eq, -- goal now two pages long
+  simp,
 end 
 
 -- I don't have the tools for this yet
-lemma v_one_chain (c : ℕ) : value_aux {c} 0 = c :=
+lemma v_one_chain (c : ℕ) (h : c ≥ 3) : value_aux (c :: 0) 0 = c :=
 begin
-unfold value_aux,
-sorry 
+  unfold value_aux,
+  rw strong_induction_eq,
+  rw strong_induction_eq,
+  simp,
+  rw strong_induction_eq,
+  rw strong_induction_eq,
+  simp,
+  show 2 + (c - 2) = c,
+  rw add_comm,refine nat.sub_add_cancel _,
+  exact le_trans (show 2 ≤ 3, by exact dec_trivial) h,
 end
+
+-- we are getting somewhere!
 
 lemma sum_one {a b : ℕ} : a + b = 1 → (a = 0 ∧ b = 1) ∨ (a = 1 ∧ b = 0) :=
 begin

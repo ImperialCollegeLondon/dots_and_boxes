@@ -82,6 +82,18 @@ def option_N_to_N : option ℕ → ℕ
 
 def multiset.N_min (s : multiset ℕ) : ℕ := option_N_to_N $ multiset.option_N_min $ multiset.map some s
 
+@[simp] lemma option_N_none : option_N_to_N none = 0 := rfl 
+
+@[simp] lemma N_min_empty : multiset.N_min 0 = 0 := rfl 
+
+@[simp] lemma N_min_singleton (a : ℕ) : multiset.N_min (a :: 0) = a :=
+begin
+  unfold multiset.N_min,simp,
+  unfold multiset.option_N_min,simp,
+  unfold min,rw if_pos,unfold option_N_to_N,
+  unfold has_le.le,
+end 
+
 -- the up-arrows mean "turn this list into a multiset"
 
 --#eval multiset.N_min ↑[2,3,3,2,6] -- 2
