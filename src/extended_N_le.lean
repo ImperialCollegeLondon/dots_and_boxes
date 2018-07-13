@@ -68,6 +68,10 @@ instance : decidable_linear_order (option ℕ) :=
 
 -- a true "min" function on multiset (option ℕ)
 
+-- note:
+-- example : @lattice.has_inf.inf (option ℕ) _ = min := rfl 
+-- so commutativity and associativity come for free
+
 def multiset.option_N_min (s : multiset (option ℕ)) : option ℕ :=
   multiset.fold (min) none s 
 
