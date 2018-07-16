@@ -170,7 +170,7 @@ definition tb (G : sle) : ℕ := tb_aux G.long_chains G.long_loops
 
 definition cv_aux (C L : multiset ℕ) : ℤ := fcv_aux C L + tb_aux C L
 
-definition cv (G : sle) : ℤ := fcv G + tb G
+definition cv (G : sle) : ℤ := cv_aux G.long_chains G.long_loops
 
 open nat 
 
@@ -248,7 +248,7 @@ begin
   assumption
 end 
 
--- TODO : controlled values
+
 
 lemma sum_one {a b : ℕ} : a + b = 1 → (a = 0 ∧ b = 1) ∨ (a = 1 ∧ b = 0) :=
 begin
@@ -261,23 +261,41 @@ begin
   exfalso,exact nat.no_confusion (nat.succ_inj H),
 end 
 
+theorem multiset.card_one_iff_singleton {α : Type} {s : multiset α} : card s = 1 ↔ ∃ a, s = a::0 :=
+⟨λ h,begin cases (@card_pos_iff_exists_mem _ s).1 (h.symm ▸ zero_lt_one) with a Ha,
+   exact ⟨a,(eq_of_le_of_card_le (singleton_le.2 Ha) $ le_of_eq h).symm⟩ end,
+ λ ⟨a,h⟩,h.symm ▸ card_singleton a⟩
+
+-- Done Ellen's first lemma!
 lemma one_comp_case (G : sle) : ((size G) = 1) → (cv G = value G) := 
 begin
   intro H,
   have H₂ := sum_one H,
   cases H₂,
-  { have H₃ : G.long_chains = ∅ := multiset.card_eq_zero.1 H₂.left,
-    have H₄ : G.long_loops ≠ ∅,
-      intro H,rw multiset.card_eq_zero.2 H₃ at H₂,rw H at H₂,have H₄ : 0 = 1 := H₂.right,
-      revert H₄,simp,
-    unfold cv tb tb_aux,
-    split_ifs,
-    { exact false.elim (H₄ h.right)},
-    { unfold fcv,
-      sorry
-    },
+  { have H₃ : G.long_chains = 0 := multiset.card_eq_zero.1 H₂.left,
+    have H₄ : ∃ a, G.long_loops = a::0 := multiset.card_one_iff_singleton.1 H₂.right,
+    cases H₄ with a Ha,
+    unfold value,
+    unfold cv,
+    rw H₃,rw Ha,
+    rw cv_one_loop,
+    congr,symmetry,
+    refine v_one_loop a _,
+    refine (sle.long_loops_are_long_and_even G a _).1,
+    rw Ha,exact multiset.mem_singleton.2 rfl,
   },
-  sorry
+  { have H₃ : G.long_loops = 0 := multiset.card_eq_zero.1 H₂.right,
+    have H₄ : ∃ a, G.long_chains = a::0 := multiset.card_one_iff_singleton.1 H₂.left,
+    cases H₄ with a Ha,
+    unfold value,
+    unfold cv,
+    rw H₃,rw Ha,
+    rw cv_one_chain,
+    congr,symmetry,
+    refine v_one_chain a _,
+    refine (sle.long_chains_are_long G a _),
+    rw Ha,exact multiset.mem_singleton.2 rfl,
+  }
 end 
 
 #exit 
