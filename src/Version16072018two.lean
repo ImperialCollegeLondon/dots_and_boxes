@@ -4,7 +4,8 @@ import data.finset
 import extended_N_le tactic.ring
 open nat 
 
-#check succ 2
+-----------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------ Buzzard's extended_N_le ---------------------------------------------------- 
 
 def extended_le : option ℕ → option ℕ → Prop
 | _ none := true
@@ -88,6 +89,9 @@ begin
 end 
 
 
+------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------- functions on multisets ---------------------------------------------------------
+
 def cons_to_the_n : ℕ → ℕ →  multiset nat →  multiset nat
 | 0 a b  := b
 | 1 a b := (multiset.cons a b) 
@@ -99,6 +103,11 @@ intros, induction m with t Pt, unfold cons_to_the_n at H, finish,
 have Hn :  x ∈ multiset.cons z (cons_to_the_n t z α), sorry,
  rw[multiset.mem_cons] at Hn, cases Hn, rw Hn, by exact a, by exact Pt Hn,
 end
+
+def distel (m : multiset nat): nat := multiset.card (multiset.erase_dup (m))
+
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------- simple_loony_endgame -------------------------------------------------------
 
 @[derive decidable_eq]
 
@@ -112,71 +121,6 @@ structure simple_loony_endgame :=
 (long_loops_are_long : ∀ x ∈ long_loops, x ≥ 8)
 (long_loops_are_even : ∀ x ∈ long_loops, 2 ∣ x)
 
-def all_chains (G : simple_loony_endgame): multiset nat :=
-(cons_to_the_n G.three_chains 3 G.long_chains)
-
-def all_loops (G : simple_loony_endgame):=
-(cons_to_the_n G.four_loops 4 (cons_to_the_n G.six_loops 6 G.long_loops))
-
-structure sle :=
-(long_chains : multiset ℕ)
-(long_chains_are_long : ∀ x ∈ long_chains, x ≥ 3)
-(long_loops : multiset ℕ)
-(long_loops_are_long_and_even : ∀ x ∈ long_loops, x ≥ 4 ∧ 2 ∣ x)
-
-def simple_loony_endgame_to_sle (G : simple_loony_endgame) : sle :=
-{
-  long_chains := (all_chains G),
-  long_chains_are_long := begin intros, unfold all_chains at H, have P : 3 ≥ 3 , finish, have K : 4 ≥ 3, by exact dec_trivial,   
-  have Q : ∀ x ∈ G.long_chains, x ≥ 3 , sorry, 
-  have R: ∀ (x : ℕ), x ∈ cons_to_the_n (G.three_chains) 3 (G.long_chains) → x ≥ 3,
-  by exact lenpre 3 3 G.three_chains (G.long_chains) P Q, finish,  end,
-  long_loops := (all_loops G),
-  long_loops_are_long_and_even := sorry
-}
-
- 
-
-def rem_chain_from_sle (G : sle) (a:nat) : sle :=
-{
-  long_chains := (multiset.erase (sle.long_chains G) a),
-  long_chains_are_long := begin intros, have H2 : (x ∈ G.long_chains), by exact multiset.mem_of_mem_erase H,
-  clear H, have H1 : ∀ x ∈ G.long_chains, x ≥ 3, by exact G.long_chains_are_long, finish, end,
-  long_loops := (sle.long_loops G),
-  long_loops_are_long_and_even := G.long_loops_are_long_and_even
-}
-
-#check multiset.mem_of_mem_erase
-
-def rem_loop_from_sle (G : sle) (a:nat) : sle :=
-{
-  long_chains := (sle.long_chains G),
-  long_chains_are_long := G.long_chains_are_long,
-  long_loops := (multiset.erase (sle.long_loops G) a),
-  long_loops_are_long_and_even := begin intros, split, have H1 : (x ∈ G.long_loops),
-  by exact multiset.mem_of_mem_erase H, have H2 : ∀ x ∈ G.long_loops, x ≥ 4 ∧ 2 ∣ x,  by exact G.long_loops_are_long_and_even,
-   finish, have H1 : (x ∈ G.long_loops),
-  by exact multiset.mem_of_mem_erase H, have H2 : ∀ x ∈ G.long_loops, x ≥ 4 ∧ 2 ∣ x,  by exact G.long_loops_are_long_and_even,
-   finish, end
-} 
-
-
-
-def size_G (G : simple_loony_endgame) :=
-simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
-+ simple_loony_endgame.six_loops G + multiset.card (simple_loony_endgame.long_loops G) 
-+ multiset.card (simple_loony_endgame.long_chains G)
-
-
-def squnum_G (G : simple_loony_endgame): nat := 
-multiset.fold (nat.add) 0 (all_chains G) + multiset.fold (nat.add) 0 (all_loops G)
-
-def squnum (G : sle): nat := 
-multiset.fold (nat.add) 0 (G.long_chains) + multiset.fold (nat.add) 0 (G.long_loops)
-
-
-def size (e : sle) : ℕ := multiset.card e.long_chains + multiset.card e.long_loops
-
 
 definition empty_game : simple_loony_endgame :=
 { three_chains := 0,
@@ -188,10 +132,6 @@ definition empty_game : simple_loony_endgame :=
   long_loops_are_long := λ x Hx, false.elim Hx,
   long_loops_are_even := λ x Hx, false.elim Hx 
 }
-
-definition empty_game_sle : sle := {long_chains := ∅,long_chains_are_long := dec_trivial, 
-  long_loops := ∅, long_loops_are_long_and_even := dec_trivial}
-
 
 definition game_three_succ (G : simple_loony_endgame): simple_loony_endgame :=
 { three_chains := simple_loony_endgame.three_chains G + 1,
@@ -262,6 +202,81 @@ definition game_long_loop_succ (G : simple_loony_endgame) (n : nat) (Hn : n ≥ 
 }
 
 
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------- sle ------------------------------------------------------------
+
+structure sle :=
+(long_chains : multiset ℕ)
+(long_chains_are_long : ∀ x ∈ long_chains, x ≥ 3)
+(long_loops : multiset ℕ)
+(long_loops_are_long_and_even : ∀ x ∈ long_loops, x ≥ 4 ∧ 2 ∣ x)
+
+
+definition empty_game_sle : sle := {long_chains := ∅,long_chains_are_long := dec_trivial, 
+  long_loops := ∅, long_loops_are_long_and_even := dec_trivial}
+
+
+def all_chains (G : simple_loony_endgame): multiset nat :=
+(cons_to_the_n G.three_chains 3 G.long_chains)
+
+def all_loops (G : simple_loony_endgame):=
+(cons_to_the_n G.four_loops 4 (cons_to_the_n G.six_loops 6 G.long_loops))
+
+def simple_loony_endgame_to_sle (G : simple_loony_endgame) : sle :=
+{
+  long_chains := (all_chains G),
+  long_chains_are_long := begin intros, unfold all_chains at H, have P : 3 ≥ 3 , finish, have K : 4 ≥ 3, by exact dec_trivial,   
+  have Q : ∀ x ∈ G.long_chains, x ≥ 3 , sorry, 
+  have R: ∀ (x : ℕ), x ∈ cons_to_the_n (G.three_chains) 3 (G.long_chains) → x ≥ 3,
+  by exact lenpre 3 3 G.three_chains (G.long_chains) P Q, finish,  end,
+  long_loops := (all_loops G),
+  long_loops_are_long_and_even := sorry
+}
+
+ 
+def rem_chain_from_sle (G : sle) (a:nat) : sle :=
+{
+  long_chains := (multiset.erase (sle.long_chains G) a),
+  long_chains_are_long := begin intros, have H2 : (x ∈ G.long_chains), by exact multiset.mem_of_mem_erase H,
+  clear H, have H1 : ∀ x ∈ G.long_chains, x ≥ 3, by exact G.long_chains_are_long, finish, end,
+  long_loops := (sle.long_loops G),
+  long_loops_are_long_and_even := G.long_loops_are_long_and_even
+}
+
+#check multiset.mem_of_mem_erase
+
+def rem_loop_from_sle (G : sle) (a:nat) : sle :=
+{
+  long_chains := (sle.long_chains G),
+  long_chains_are_long := G.long_chains_are_long,
+  long_loops := (multiset.erase (sle.long_loops G) a),
+  long_loops_are_long_and_even := begin intros, split, have H1 : (x ∈ G.long_loops),
+  by exact multiset.mem_of_mem_erase H, have H2 : ∀ x ∈ G.long_loops, x ≥ 4 ∧ 2 ∣ x,  by exact G.long_loops_are_long_and_even,
+   finish, have H1 : (x ∈ G.long_loops),
+  by exact multiset.mem_of_mem_erase H, have H2 : ∀ x ∈ G.long_loops, x ≥ 4 ∧ 2 ∣ x,  by exact G.long_loops_are_long_and_even,
+   finish, end
+} 
+
+----------------------------------------------------------------------------------------------------------------------------
+--------------------------------------- functions on simple_loony_endgame and sle-------------------------------------------
+
+def size_G (G : simple_loony_endgame) :=
+simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
++ simple_loony_endgame.six_loops G + multiset.card (simple_loony_endgame.long_loops G) 
++ multiset.card (simple_loony_endgame.long_chains G)
+
+def size (e : sle) : ℕ := multiset.card e.long_chains + multiset.card e.long_loops
+
+
+
+def squnum_G (G : simple_loony_endgame): nat := 
+multiset.fold (nat.add) 0 (all_chains G) + multiset.fold (nat.add) 0 (all_loops G)
+
+def squnum (G : sle): nat := 
+multiset.fold (nat.add) 0 (G.long_chains) + multiset.fold (nat.add) 0 (G.long_loops)
+
+
+
 def chain_value (s0 : multiset ℕ) : ℕ := 
 multiset.strong_induction_on s0 $ λ s H,multiset.N_min $ multiset.pmap (λ (a : ℕ) (h : a ∈ s),a - 2 + int.nat_abs 
 (2 - H (s.erase a) (multiset.erase_lt.2 h))) s (λ a, id)
@@ -277,10 +292,9 @@ def loop_value (s0 : multiset ℕ) : ℕ := multiset.strong_induction_on s0 $ λ
 def chain_move_values (s0 : multiset ℕ) : multiset ℕ := 
 multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 2 + int.nat_abs (2 - chain_value (s0.erase a))) s0 (λ a,id)
 
-#eval chain_move_values {3,4,5,6,3,3,3,3}
-
 def loop_move_values (s0 : multiset ℕ) : multiset ℕ := 
 multiset.pmap (λ (a : ℕ) (h : a ∈ s0), a - 4 + int.nat_abs (4 - loop_value (s0.erase a))) s0 (λ a,id)
+
 
 
 def value_aux : multiset ℕ → multiset ℕ → ℕ
@@ -328,9 +342,11 @@ value_aux C L = multiset.N_min
         L (λ _,id)
   ) := value_aux._main.equations._eqn_1 C L 
 
+definition value_G (G : simple_loony_endgame) := value_aux (all_chains G) (all_loops G)
+
 definition value (G : sle) := value_aux G.long_chains G.long_loops
 
-definition value_G (G : simple_loony_endgame) := value_aux (all_chains G) (all_loops G)
+
 
 --#check @multiset.pmap 
 /-
@@ -365,7 +381,7 @@ multiset.pmap :
 +-/
 
 
-def distel (m : multiset nat): nat := multiset.card (multiset.erase_dup (m))
+
 
 
 def fcv_G (G : simple_loony_endgame) :=
@@ -384,14 +400,6 @@ definition fcv_aux (C L : multiset ℕ) : ℤ := ↑(multiset.sum C + multiset.s
 definition fcv_KB (G : sle) : ℤ := fcv_aux G.long_chains G.long_loops
 
 
-def tb_G (G : simple_loony_endgame)  :=
-if size_G G = 0 then 0
-else if multiset.card (simple_loony_endgame.long_chains G) + simple_loony_endgame.three_chains G = 0 then 8
-else if multiset.card (simple_loony_endgame.long_loops G) + simple_loony_endgame.four_loops G 
-+ simple_loony_endgame.six_loops G = 0 then 4
-else if simple_loony_endgame.long_chains G = multiset.zero then 6
-else 4
-
 
 -- Chris and Simon decidability thing
 instance decidable_exists_multiset {α : Type*} (s : multiset α) (p : α → Prop) [decidable_pred p] :
@@ -402,6 +410,14 @@ instance (C : multiset ℕ) : decidable (∃ a : ℕ, a ≥ 4 ∧ a ∈ C) :=
 suffices this : decidable (∃ a ∈ C, a ≥ 4),
 by { resetI, apply @decidable_of_iff _ _ _ this, apply exists_congr, intro, tauto },
 by { apply_instance }
+
+def tb_G (G : simple_loony_endgame)  :=
+if size_G G = 0 then 0
+else if multiset.card (simple_loony_endgame.long_chains G) + simple_loony_endgame.three_chains G = 0 then 8
+else if multiset.card (simple_loony_endgame.long_loops G) + simple_loony_endgame.four_loops G 
++ simple_loony_endgame.six_loops G = 0 then 4
+else if simple_loony_endgame.long_chains G = multiset.zero then 6
+else 4
 
 -- without those 6 lines of gobble-de-gook above, the below lines don't work
 definition tb_aux (C L : multiset ℕ) : ℕ := if (C = 0 ∧ L = 0) then 0 else
@@ -418,13 +434,6 @@ else if  G.long_chains = multiset.zero then 4
 else if multiset.erase_dup (G.long_chains) = {3} then 6
 else 4
 
-#check game_three_succ empty_game
-
-#check game_long_loop_succ empty_game 8 
-
-
-#check min 1 2
-
 
 
 def cv_G (G : simple_loony_endgame) := fcv_G G + tb_G G
@@ -433,13 +442,21 @@ definition cv_aux (C L : multiset ℕ) : ℤ := fcv_aux C L + tb_aux C L
 
 def cv (G : sle) := fcv G + tb G
 
-#check 4 % 1
+lemma cv_zero : cv empty_game_sle = 0 := dec_trivial 
 
-def loop_move_is_optimal (G : simple_loony_endgame) (a: nat): Prop  :=
+
+
+def loop_move_is_optimal_G (G : simple_loony_endgame) (a: nat): Prop  :=
 value_G G = a - 4 + int.nat_abs (4 - value_aux (all_chains G) ((all_loops G).erase a))
 
-def chain_move_is_optimal (G : simple_loony_endgame) (a: nat): Prop  :=
+def loop_move_is_optimal (G : sle) (a: nat): Prop  :=
+value G = a - 4 + int.nat_abs (4 - value_aux (G.long_chains) ((G.long_loops).erase a))
+
+def chain_move_is_optimal_G (G : simple_loony_endgame) (a: nat): Prop  :=
 value_G G = a - 2 + int.nat_abs (2 - value_aux ((all_chains G).erase a) (all_loops G))
+
+def chain_move_is_optimal (G : sle) (a: nat): Prop  :=
+value G = a - 2 + int.nat_abs (2 - value_aux ((G.long_chains).erase a) (G.long_loops))
 
 --set_option class.instance_max_depth
 
@@ -449,7 +466,7 @@ if j : x = (game_four_succ G) then
 have size_G G < size_G x, from begin rw[j], unfold game_four_succ, unfold simple_loony_endgame.sizeof,   end,
 -/
 
-lemma cv_zero : cv empty_game_sle = 0 := dec_trivial 
+
 
 definition single_chain (c : ℕ) (Hc : c ≥ 3) : sle :=
 { long_chains := {c},
