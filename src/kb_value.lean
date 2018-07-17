@@ -3,20 +3,20 @@ import extended_N_le tactic.ring
 -- simplified version of SLE (because I want easy access to the multisets of loops and chains)
 @[derive decidable_eq]
 structure sle :=
-(long_chains : multiset ℕ)
-(long_chains_are_long : ∀ x ∈ long_chains, x ≥ 3)
-(long_loops : multiset ℕ)
-(long_loops_are_long_and_even : ∀ x ∈ long_loops, x ≥ 4 ∧ 2 ∣ x)
+(chains : multiset ℕ)
+(chains_are_long : ∀ x ∈ chains, x ≥ 3)
+(loops : multiset ℕ)
+(loops_are_long_and_even : ∀ x ∈ loops, x ≥ 4 ∧ 2 ∣ x)
 
 
-definition empty_game : sle := {long_chains := ∅,long_chains_are_long := dec_trivial, 
-  long_loops := ∅, long_loops_are_long_and_even := dec_trivial}
+definition empty_game : sle := {chains := ∅,chains_are_long := dec_trivial, 
+  loops := ∅, loops_are_long_and_even := dec_trivial}
 
 definition example_game : sle :=
-{ long_chains := {3,3,3,3,8},
-  long_chains_are_long := dec_trivial,
-  long_loops := {4},
-  long_loops_are_long_and_even := dec_trivial
+{ chains := {3,3,3,3,8},
+  chains_are_long := dec_trivial,
+  loops := {4},
+  loops_are_long_and_even := dec_trivial
 }
 
 -- note: the 20 lines below are just WARM-UP -- it's KB practising for the real definitions.
@@ -138,16 +138,16 @@ value_aux C L = multiset.N_min
         L (λ _,id)
   ) := value_aux._main.equations._eqn_1 C L 
 
-definition value (G : sle) := value_aux G.long_chains G.long_loops
+definition value (G : sle) := value_aux G.chains G.loops
 
 definition size_aux (C L : multiset ℕ) := multiset.card C + multiset.card L 
 
-definition size (G : sle) : ℕ := size_aux G.long_chains G.long_loops
+definition size (G : sle) : ℕ := size_aux G.chains G.loops
 
 definition fcv_aux (C L : multiset ℕ) : ℤ := ↑(multiset.sum C + multiset.sum L) 
   - 4 * multiset.card C - 8 * multiset.card L
 
-definition fcv (G : sle) : ℤ := fcv_aux G.long_chains G.long_loops
+definition fcv (G : sle) : ℤ := fcv_aux G.chains G.loops
 
 -- Chris and Simon decidability thing
 instance decidable_exists_multiset {α : Type*} (s : multiset α) (p : α → Prop) [decidable_pred p] :
@@ -166,23 +166,24 @@ definition tb_aux (C L : multiset ℕ) : ℕ := if (C = 0 ∧ L = 0) then 0 else
   if ∃ a : ℕ, a ≥ 4 ∧ a ∈ C then 4 else 
   6
 
-definition tb (G : sle) : ℕ := tb_aux G.long_chains G.long_loops
+definition tb (G : sle) : ℕ := tb_aux G.chains G.loops
 
 definition cv_aux (C L : multiset ℕ) : ℤ := fcv_aux C L + tb_aux C L
 
-definition cv (G : sle) : ℤ := cv_aux G.long_chains G.long_loops
+definition cv (G : sle) : ℤ := cv_aux G.chains G.loops
+
 
 open nat 
 
 lemma cv_zero : cv empty_game = 0 := dec_trivial 
 
 definition single_chain (c : ℕ) (Hc : c ≥ 3) : sle :=
-{ long_chains := {c},
-  long_chains_are_long := λ x H, begin
+{ chains := {c},
+  chains_are_long := λ x H, begin
   rwa multiset.mem_singleton.1 H,
   end ,
-  long_loops := ∅,
-  long_loops_are_long_and_even := dec_trivial
+  loops := ∅,
+  loops_are_long_and_even := dec_trivial
 }
 
 @[simp] lemma multiset.sum_singleton {α : Type} [add_comm_monoid α]
@@ -266,14 +267,14 @@ theorem multiset.card_one_iff_singleton {α : Type} {s : multiset α} : card s =
    exact ⟨a,(eq_of_le_of_card_le (singleton_le.2 Ha) $ le_of_eq h).symm⟩ end,
  λ ⟨a,h⟩,h.symm ▸ card_singleton a⟩
 
--- Done Ellen's first lemma!
+-- Ellen's first lemma!
 lemma one_comp_case (G : sle) : ((size G) = 1) → (cv G = value G) := 
 begin
   intro H,
   have H₂ := sum_one H,
   cases H₂,
-  { have H₃ : G.long_chains = 0 := multiset.card_eq_zero.1 H₂.left,
-    have H₄ : ∃ a, G.long_loops = a::0 := multiset.card_one_iff_singleton.1 H₂.right,
+  { have H₃ : G.chains = 0 := multiset.card_eq_zero.1 H₂.left,
+    have H₄ : ∃ a, G.loops = a::0 := multiset.card_one_iff_singleton.1 H₂.right,
     cases H₄ with a Ha,
     unfold value,
     unfold cv,
@@ -281,11 +282,11 @@ begin
     rw cv_one_loop,
     congr,symmetry,
     refine v_one_loop a _,
-    refine (sle.long_loops_are_long_and_even G a _).1,
+    refine (sle.loops_are_long_and_even G a _).1,
     rw Ha,exact multiset.mem_singleton.2 rfl,
   },
-  { have H₃ : G.long_loops = 0 := multiset.card_eq_zero.1 H₂.right,
-    have H₄ : ∃ a, G.long_chains = a::0 := multiset.card_one_iff_singleton.1 H₂.left,
+  { have H₃ : G.loops = 0 := multiset.card_eq_zero.1 H₂.right,
+    have H₄ : ∃ a, G.chains = a::0 := multiset.card_one_iff_singleton.1 H₂.left,
     cases H₄ with a Ha,
     unfold value,
     unfold cv,
@@ -293,34 +294,40 @@ begin
     rw cv_one_chain,
     congr,symmetry,
     refine v_one_chain a _,
-    refine (sle.long_chains_are_long G a _),
+    refine (sle.chains_are_long G a _),
     rw Ha,exact multiset.mem_singleton.2 rfl,
   }
 end 
 
-#exit 
+--lemma loop_and_three_chain_case (G : simple_loony_endgame) : 
+-- (G.three_chains = 1) → (multiset.card(all_loops G) = 1 ) → (cv_G G = value G) 
 
+-- Ellen, this doesn't look true to me: 
+#eval value_aux {3,4} {4} -- 1
+#eval cv_aux {3,4} {4}  -- -1
 
-lemma loop_and_three_chain_case (G : simple_loony_endgame) : (G.three_chains = 1) → (multiset.card(all_loops G) = 1 ) → (cv_G G = value G) :=
+-- lemma three_point_one (G : simple_loony_endgame) : 
+-- ((size_G G) > 0) → (G.three_chains = 0) → (G.four_loops = 0) →  (value G ≥ 2) := sorry
+
+lemma value_ge_2_of_no_threechains_or_fourloops (G : sle) (Hpos : size G > 0) 
+(Hno3chains : G.chains.count 3 = 0) (Hno4loops : G.loops.count 4 = 0) : value G ≥ 2 :=
+begin
+unfold value,
+rw value_aux_eq,
 sorry
-
-lemma three_point_one (G : simple_loony_endgame) : ((size_G G) > 0) → (G.three_chains = 0) → (G.four_loops = 0) →  (value G ≥ 2) := sorry
-
+end 
 
 
 /-
 definition multiset.sum {α : Type} [has_add α] [has_zero α] (s : multiset α) : α := multiset.fold (+) 0 s 
 def fcv_G (G : sle) := 
 simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
-+ simple_loony_endgame.six_loops G + multiset.card (simple_loony_endgame.long_loops G) 
-+ multiset.card (simple_loony_endgame.long_chains G) 
-- (multiset.card (multiset.erase_dup (simple_loony_endgame.long_chains G)) + 1)*4 
-- (multiset.card (multiset.erase_dup (simple_loony_endgame.long_loops G)) + 2)*8 
++ simple_loony_endgame.six_loops G + multiset.card (simple_loony_endgame.loops G) 
++ multiset.card (simple_loony_endgame.chains G) 
+- (multiset.card (multiset.erase_dup (simple_loony_endgame.chains G)) + 1)*4 
+- (multiset.card (multiset.erase_dup (simple_loony_endgame.loops G)) + 2)*8 
 
 lemma one_comp_case (G : sle) : (size G) = 1) → (cv_G G = v_G G) := sorry
-
-
-#eval value G -- gives 0, which looks right
 
 -/
 

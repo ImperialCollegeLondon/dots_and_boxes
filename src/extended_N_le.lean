@@ -1,4 +1,9 @@
+-- This file creates a function called dots_and_boxes.multiset.N_min which takes as input
+-- a multiset of nats, and returns its min if the multiset is non-empty, and returns 0 otherwise.
+
 import data.multiset
+
+namespace dots_and_boxes 
 
 def extended_le : option ℕ → option ℕ → Prop
 | _ none := true
@@ -56,8 +61,10 @@ instance : decidable_linear_order (option ℕ) :=
   le_trans := extended_le_trans,
   le_antisymm := extended_le_antisymm,
   le_total := extended_le_total,
-  decidable_le := extended_decidable_le,
+  decidable_le := by apply_instance,
 }
+
+end dots_and_boxes
 
 -- something of type "option ℕ" is either "some n" or "none" (which is +infinity).
 
@@ -80,23 +87,11 @@ def multiset.option_N_min (s : multiset (option ℕ)) : option ℕ :=
 
 -- the min function we want on multiset ℕ
 
-def option_N_to_N : option ℕ → ℕ 
+def dots_and_boxes.option_N_to_N : option ℕ → ℕ 
 | none := 0
 | (some n) := n
 
-def multiset.N_min (s : multiset ℕ) : ℕ := option_N_to_N $ multiset.option_N_min $ multiset.map some s
-
-@[simp] lemma option_N_none : option_N_to_N none = 0 := rfl 
-
-@[simp] lemma N_min_empty : multiset.N_min 0 = 0 := rfl 
-
-@[simp] lemma N_min_singleton (a : ℕ) : multiset.N_min (a :: 0) = a :=
-begin
-  unfold multiset.N_min,simp,
-  unfold multiset.option_N_min,simp,
-  unfold min,rw if_pos,unfold option_N_to_N,
-  unfold has_le.le,
-end 
+def multiset.N_min (s : multiset ℕ) : ℕ := dots_and_boxes.option_N_to_N $ multiset.option_N_min $ multiset.map some s
 
 -- the up-arrows mean "turn this list into a multiset"
 
@@ -105,3 +100,56 @@ end
 --#eval multiset.N_min ↑[6] -- 6
 
 -- note that min of empty list is zero (because option_N_to_N sends infinity to zero)
+
+namespace dots_and_boxes 
+
+open multiset 
+
+@[simp] lemma option_N_none : option_N_to_N none = 0 := rfl 
+
+@[simp] lemma N_min_empty : N_min 0 = 0 := rfl 
+
+@[simp] lemma N_min_singleton (a : ℕ) : N_min (a :: 0) = a :=
+begin
+  unfold N_min,simp,
+  unfold option_N_min,simp,
+  unfold min,rw if_pos,unfold option_N_to_N,
+  unfold has_le.le,
+end 
+
+lemma option_N_min_ge (s : multiset (option ℕ)) (b : option ℕ) : (∀ a ∈ s, a ≥ b) → 
+option_N_min s ≥ b := begin
+  apply multiset.induction_on s,
+  { -- base case
+    intro H,
+    show none ≥ b,
+    exact le_none b
+  },
+  { --inductive step
+    intros a s H1 H2,
+    unfold option_N_min,
+    rw fold_cons_left,
+    apply le_min,
+    { refine H2 a _,
+      exact mem_cons_self _ _,
+    },
+    unfold option_N_min at H1,
+    apply H1,
+    intros a' Ha',
+    apply H2,
+    apply mem_cons.2,right,
+    assumption
+  }
+end 
+
+lemma N_min_ge (s : multiset ℕ) (b : ℕ) (H1 : card s > 0) (H2 : ∀ a ∈ s, a ≥ b) : N_min s ≥ b := 
+begin
+  unfold N_min,
+  sorry 
+end 
+
+
+
+
+
+end dots_and_boxes 
