@@ -142,10 +142,60 @@ option_N_min s ≥ b := begin
   }
 end 
 
+lemma option_N_min_eq_finite_fold (s : multiset (option ℕ)) (a : ℕ) : option_N_min (some a :: s) = multiset.fold min (some a) s :=
+begin
+  unfold option_N_min,
+  apply fold_cons'_right,
+end 
+
+lemma option_min (x y : ℕ) : min (some x) (some y) = some (min x y) :=
+begin
+  unfold min,
+  split_ifs;refl
+end 
+
+lemma option_N_min_eq_option_min (t : multiset ℕ) (b : ℕ) :
+option_N_to_N (fold min (some b) (map some t)) = fold min b t :=
+begin
+  rw fold_hom min (λ x y, (option_min x y).symm),
+  refl
+end 
+
+lemma fold_min (t : multiset ℕ) (a b : ℕ) : b ≤ a → (∀ c ∈ t, b ≤ c) → b ≤ fold min a t :=
+begin
+  intros Hba,
+  apply multiset.induction_on t,finish,
+  intros a' s IH H, --a' m IHba Hba c Hc Hbc,
+  rw fold_cons_left,
+  apply le_min,
+  { apply H a',
+    apply multiset.mem_cons_self},
+  apply IH,
+  intros c Hc,
+  apply H,
+  apply multiset.mem_cons.2,right,assumption
+end 
+
 lemma N_min_ge (s : multiset ℕ) (b : ℕ) (H1 : card s > 0) (H2 : ∀ a ∈ s, a ≥ b) : N_min s ≥ b := 
 begin
   unfold N_min,
-  sorry 
+  have H3 := card_pos_iff_exists_mem.1 H1,
+  cases H3 with a Ha,
+  have H3 := exists_cons_of_mem Ha,
+  cases H3 with t Ht,
+  rw Ht,
+  rw map_cons,
+  rw option_N_min_eq_finite_fold,
+  rw option_N_min_eq_option_min,
+  apply fold_min,
+  { apply H2,
+    rw Ht,
+    apply mem_cons_self
+  },
+  intros c Hc,
+  apply H2,
+  rw Ht,
+  apply multiset.mem_cons.2,right,assumption
 end 
 
 

@@ -309,27 +309,103 @@ end
 -- lemma three_point_one (G : simple_loony_endgame) : 
 -- ((size_G G) > 0) → (G.three_chains = 0) → (G.four_loops = 0) →  (value G ≥ 2) := sorry
 
+-- for mathlib
+#check @pmap 
+
+lemma multiset.pmap_card (α : Type*) (β : Type*) (p : α → Prop) (H : ∀ a, p a → β) (s : multiset α) 
+(H2 : ∀ a, a ∈ s → p a) : card (multiset.pmap H s H2) = card s :=
+begin
+  revert H2,
+  apply multiset.induction_on s,finish, -- base case
+  intros a s IH H3,
+  rw [pmap_cons,card_cons,card_cons,IH] -- I'm a bit bewildered about why rw IH works!
+end 
+
+lemma multiset.pmap_mem {α : Type*} {β : Type*} {p : α → Prop} {H : ∀ a, p a → β} {s : multiset α} 
+{H2 : ∀ a, a ∈ s → p a} {b : β} (Hb : b ∈ multiset.pmap H s H2) : ∃ a : α, ∃ Ha : a ∈ s, b = H a (H2 a Ha) :=
+begin
+  revert Hb,
+  revert H2,
+  apply multiset.induction_on s,finish,
+  intros a s IH H2 Hb,
+  rw pmap_cons at Hb,
+  rw multiset.mem_cons at Hb,
+  cases Hb,
+  { existsi a,
+    existsi multiset.mem_cons_self a s,
+    assumption},
+  have H2' : ∀ (a : α), a ∈ s → p a,
+  { intros a' Ha',
+    apply H2 a',
+    rw multiset.mem_cons,right,assumption },
+  cases (@IH H2' Hb) with a' Ha',
+  existsi a',
+  cases Ha' with H3 H4,
+  have H5 : a' ∈ a :: s,
+    rw multiset.mem_cons,right,assumption,
+  existsi H5,
+  assumption
+end 
+
 lemma value_ge_2_of_no_threechains_or_fourloops (G : sle) (Hpos : size G > 0) 
 (Hno3chains : G.chains.count 3 = 0) (Hno4loops : G.loops.count 4 = 0) : value G ≥ 2 :=
 begin
-unfold value,
-rw value_aux_eq,
-sorry
+  unfold value,
+  rw value_aux_eq,
+  apply dots_and_boxes.N_min_ge,
+  { rw [card_add,multiset.pmap_card,multiset.pmap_card],
+    exact Hpos},
+  intros a Ha,
+  have H := mem_add.1 Ha,
+  clear Ha,
+  cases H,
+  { have H2 := multiset.pmap_mem H,
+    cases H2 with b Hb,
+    cases Hb with Hb H3,
+    rw H3,
+    show b - 2 + int.nat_abs (2 + -↑(value_aux (erase (G.chains) b) (G.loops))) ≥ 2,
+    refine le_trans _ (nat.le_add_right (b-2) _),
+    apply nat.le_sub_left_of_add_le,
+    have H4 : 3 ≤ b := G.chains_are_long b Hb,
+    rw le_iff_eq_or_lt at H4,
+    cases H4,
+    { rw ←H4 at Hb, -- I now have two Hb's. Do I win £5?
+      rw ←multiset.count_pos at Hb,
+      rw Hno3chains at Hb,
+      cases Hb
+    },
+    exact H4,
+  },
+  { have H2 := multiset.pmap_mem H,
+    cases H2 with b Hb,
+    cases Hb with Hb H3,
+    rw H3,
+    show b - 4 + int.nat_abs (4 + -↑(value_aux (G.chains) (erase (G.loops) b))) ≥ 2,
+    refine le_trans _ (nat.le_add_right (b-4) _),
+    apply nat.le_sub_left_of_add_le,
+    have H4 := G.loops_are_long_and_even b Hb,
+    cases H4 with H5 H6,
+    change 4 ≤ b at H5,
+    rw le_iff_eq_or_lt at H5,
+    cases H5,
+    { rw ←H5 at Hb, -- I now have two Hb's. Do I win £5?
+      rw ←multiset.count_pos at Hb,
+      rw Hno4loops at Hb,
+      cases Hb
+    },
+    change 5 ≤ b at H5,
+    rw le_iff_eq_or_lt at H5,
+    cases H5,
+    { rw ←H5 at H6,
+      exfalso,
+      revert H6,
+      exact dec_trivial,
+    },
+    exact H5
+  }
 end 
 
 
-/-
-definition multiset.sum {α : Type} [has_add α] [has_zero α] (s : multiset α) : α := multiset.fold (+) 0 s 
-def fcv_G (G : sle) := 
-simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
-+ simple_loony_endgame.six_loops G + multiset.card (simple_loony_endgame.loops G) 
-+ multiset.card (simple_loony_endgame.chains G) 
-- (multiset.card (multiset.erase_dup (simple_loony_endgame.chains G)) + 1)*4 
-- (multiset.card (multiset.erase_dup (simple_loony_endgame.loops G)) + 2)*8 
-
-lemma one_comp_case (G : sle) : (size G) = 1) → (cv_G G = v_G G) := sorry
-
--/
 
 /- Ellen Challenges!
 
