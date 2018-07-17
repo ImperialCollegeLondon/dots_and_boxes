@@ -312,8 +312,8 @@ end
 -- for mathlib
 #check @pmap 
 
-lemma multiset.pmap_card (α : Type*) (β : Type*) (p : α → Prop) (H : ∀ a, p a → β) (s : multiset α) 
-(H2 : ∀ a, a ∈ s → p a) : card (multiset.pmap H s H2) = card s :=
+lemma multiset.pmap_card {α : Type*} {β : Type*} {p : α → Prop} {H : ∀ a, p a → β} {s : multiset α} 
+{H2 : ∀ a, a ∈ s → p a} : card (multiset.pmap H s H2) = card s :=
 begin
   revert H2,
   apply multiset.induction_on s,finish, -- base case
@@ -333,7 +333,7 @@ begin
   cases Hb,
   { existsi a,
     existsi multiset.mem_cons_self a s,
-    assumption},
+    exact Hb},
   have H2' : ∀ (a : α), a ∈ s → p a,
   { intros a' Ha',
     apply H2 a',
@@ -344,7 +344,7 @@ begin
   have H5 : a' ∈ a :: s,
     rw multiset.mem_cons,right,assumption,
   existsi H5,
-  assumption
+  exact H4
 end 
 
 lemma value_ge_2_of_no_threechains_or_fourloops (G : sle) (Hpos : size G > 0) 
