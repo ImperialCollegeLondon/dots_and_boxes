@@ -113,17 +113,15 @@ lemma cases_for_L2 (L : multiset ℕ) (HL : ∀ x ∈ L, x ≥ 4 ∧ 2 ∣ x) :
       left,exact ⟨H4,H6⟩
 end 
 
-set_option pp.all true 
-
-lemma exhaustive_cases (G : sle) : 
+lemma exhaustive_cases (G : sle) :
   (G.chains = multiset.cons 3 0 ∧ multiset.card G.loops = 1)
-∨ (G.chains = multiset.filter (λ x, x ≥ 4) G.chains ∧ G.loops = 0 ) 
-∨ (G.chains = multiset.filter (λ x, x ≥ 4) G.chains ∧ G.loops = multiset.filter (λ x, x ≥ 8) G.loops ∧ G.loops ≠ 0 ) 
-∨ (G.chains = multiset.cons 3 0 ∧ G.loops = multiset.filter (λ x, x ≥ 8) G.loops) 
+∨ (G.chains = multiset.filter (λ x, x ≥ 4) G.chains ∧ G.loops = 0 )
+∨ (G.chains = multiset.filter (λ x, x ≥ 4) G.chains ∧ G.loops = multiset.filter (λ x, x ≥ 8) G.loops ∧ G.loops ≠ 0 )
+∨ (G.chains = multiset.cons 3 0 ∧ G.loops = multiset.filter (λ x, x ≥ 8) G.loops)
 ∨ ((3 ∈ G.chains ∨ 4 ∈ G.loops ∨ 6 ∈ G.loops) ∧ ∃ x ≥ 4, x ∈ G.chains)
-∨ ((3 ∈ G.chains ∨ 4 ∈ G.loops ∨ 6 ∈ G.loops) ∧ multiset.count 3 G.chains ≥ 2 ∧ multiset.erase_dup G.chains = multiset.cons 3 0)
+∨ (multiset.count 3 G.chains ≥ 2 ∧ multiset.erase_dup G.chains = multiset.cons 3 0)
 ∨ ((4 ∈ G.loops ∨ 6 ∈ G.loops) ∧ G.chains = 0)
-∨ ((4 ∈ G.loops ∨ 6 ∈ G.loops) ∧ G.chains = multiset.cons 3 0 ∧ multiset.card G.loops ≥ 2) := 
+∨ ((4 ∈ G.loops ∨ 6 ∈ G.loops) ∧ G.chains = multiset.cons 3 0 ∧ multiset.card G.loops ≥ 2) :=
 begin
   have HC := cases_for_C G.chains G.chains_are_long,
   cases HC,
@@ -177,8 +175,6 @@ begin
   { -- C={3,3,...,3}
     cases HC with n Hn,cases Hn with Hn HC,
     right,right,right,right,right,left,
-    split,left,rw HC,rw [←count_pos,count_repeat],
-      exact lt_of_lt_of_le dec_trivial Hn,
     split,rw HC,rw [count_repeat],exact Hn,
     rw [HC],rw ←erase_dup_singleton,
     rw erase_dup_ext,intro l,split,
