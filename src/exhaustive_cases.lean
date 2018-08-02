@@ -17,6 +17,7 @@ theorem repeat_one {α : Type*} {a : α} : repeat a 1 = a :: 0 :=
 
 end multiset
 
+-- proof starts here
 open multiset 
 
 lemma loop468 (L : multiset ℕ) (HL : ∀ x ∈ L, x ≥ 4 ∧ 2 ∣ x) :
