@@ -186,8 +186,8 @@ definition single_chain (c : ℕ) (Hc : c ≥ 3) : sle :=
   loops_are_long_and_even := dec_trivial
 }
 
-@[simp] lemma multiset.sum_singleton {α : Type} [add_comm_monoid α]
-(c : α) : multiset.sum (c :: 0) = c := begin rw multiset.sum_cons c 0,exact add_zero c end
+--@[simp] lemma multiset.sum_singleton {α : Type} [add_comm_monoid α]
+--(c : α) : multiset.sum (c :: 0) = c := begin rw multiset.sum_cons c 0,exact add_zero c end
 
 /-
 @[simp] lemma multiset.sum_singleton' {α : Type} [add_comm_monoid α]
