@@ -229,31 +229,17 @@ begin
     rw @filter_cons_of_neg _ (λ l, l = 6) _ _ s H6,
     rw @filter_cons_of_pos _ (λ l, l ≥ 8) _ _ s H8,
     rw [sum_cons,card_cons,mul_add,mul_one],
-    rw H6,
     have H5 : (∀ (x : ℕ), x ∈ s → x ≥ 4 ∧ 2 ∣ x),
       intros x Hx,apply H2,simp [Hx],
     have H := H1 H5,
-    suffices : sum (filter (λ (l : ℕ), l = 4) s) + (6 + sum (filter (λ (l : ℕ), l = 6) s)) +
-          sum (filter (λ (l : ℕ), l ≥ 8) s) +
+    suffices : sum (filter (λ (l : ℕ), l = 4) s) + sum (filter (λ (l : ℕ), l = 6) s) +
+          (n + sum (filter (λ (l : ℕ), l ≥ 8) s)) +
         4 * card (filter (λ (l : ℕ), l = 4) s) +
-      (2 * card (filter (λ (l : ℕ), l = 6) s) + 2) =
-    sum (filter (λ (l : ℕ), l = 4) s) + sum (filter (λ (l : ℕ), l = 6) s) + sum (filter (λ (l : ℕ), l ≥ 8) s) +
+      2 * card (filter (λ (l : ℕ), l = 6) s) = sum (filter (λ (l : ℕ), l = 4) s) + sum (filter (λ (l : ℕ), l = 6) s) + sum (filter (λ (l : ℕ), l ≥ 8) s) +
         4 * card (filter (λ (l : ℕ), l = 4) s) +
-      2 * card (filter (λ (l : ℕ), l = 6) s) + 8,
-      rw this,exact add_le_add_right H 8,
-    suffices : 2 +
-      (6 +
-         (sum (filter (λ (l : ℕ), l = 4) s) +
-            (sum (filter (λ (l : ℕ), l = 6) s) +
-               (2 * card (filter (λ (l : ℕ), l = 6) s) +
-                  (4 * card (filter (λ (l : ℕ), l = 4) s) + sum (filter (λ (l : ℕ), l ≥ 8) s)))))) =
-    8 +
-      (sum (filter (λ (l : ℕ), l = 4) s) +
-         (sum (filter (λ (l : ℕ), l = 6) s) +
-            (2 * card (filter (λ (l : ℕ), l = 6) s) +
-               (4 * card (filter (λ (l : ℕ), l = 4) s) + sum (filter (λ (l : ℕ), l ≥ 8) s))))),
-    simpa,
-    rw ←add_assoc,
+      2 * card (filter (λ (l : ℕ), l = 6) s) + n,
+      rw this,exact add_le_add H H8,
+    simp,
   }
 end
 
@@ -386,5 +372,100 @@ begin
     rw countp_count at H,
     rwa [add_assoc,add_comm (2 * count 6 G.loops),←add_assoc,mul_comm],
   },
-  repeat {sorry}
+  { have H0 : (count 6 (filter (λ (l : ℕ), l = 4) (G.loops))) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    have H0 : count 6 (filter (λ (l : ℕ), l ≥ 8) (G.loops)) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    have H0 : count 4 (filter (λ (l : ℕ), l = 6) (G.loops)) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    have H0 : count 4 (filter (λ (l : ℕ), l ≥ 8) (G.loops)) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    suffices : 0 ≤
+    int.of_nat (sum (G.chains)) +
+      (int.of_nat (sum (G.loops)) +
+         (↑(count 3 (G.chains)) +
+            (-(↑(card (G.chains)) * 4) +
+               (-(↑(card (G.loops)) * 8) + (2 * ↑(count 6 (G.loops)) + 4 * ↑(count 4 (G.loops))))))),
+    simpa,
+    have HL := loop_sum_ge G.loops G.loops_are_long_and_even,
+    have HC := chain_sum_ge G.chains G.chains_are_long,
+    rw [←countp_eq_card_filter,countp_count] at HL,
+    rw [←countp_eq_card_filter,countp_count] at HL,
+    rw [←countp_eq_card_filter,countp_count] at HC,
+    show (0 : ℤ) ≤ ↑(sum (G.chains)) +
+      (↑(sum (G.loops)) + (↑(count 3 (G.chains)) +
+            (-(↑(card (G.chains)) * (4 : ℕ)) +
+               (-(↑(card (G.loops)) * (8 : ℕ)) + ((2 : ℕ) * ↑(count 6 (G.loops)) + (4 : ℕ) * ↑(count 4 (G.loops))))))),
+    have H : 
+     8 * card (G.loops) + 4 * card (G.chains)
+    ≤
+    (sum (G.loops) + 4 * count 4 (G.loops) + 2 * count 6 (G.loops)) + (sum (G.chains) + count 3 (G.chains)) 
+     ,
+      exact add_le_add HL HC,
+    rw [←int.coe_nat_le,int.coe_nat_add,int.coe_nat_add,int.coe_nat_add,int.coe_nat_add,int.coe_nat_add] at H,
+    rw ←sub_nonneg at H,
+    suffices : (↑(sum (G.loops)) : ℤ) + ↑(4 * count 4 (G.loops)) + ↑(2 * count 6 (G.loops)) +
+        (↑(sum (G.chains)) + ↑(count 3 (G.chains))) -
+      (↑(8 * card (G.loops)) + ↑(4 * card (G.chains))) = ↑(sum (G.chains)) +
+      (↑(sum (G.loops)) +
+         (↑(count 3 (G.chains)) +
+            (-(↑(card (G.chains)) * ↑4) +
+               (-(↑(card (G.loops)) * ↑8) + (↑2 * ↑(count 6 (G.loops)) + ↑4 * ↑(count 4 (G.loops))))))),
+      rwa ←this,
+    
+    rw [←int.coe_nat_mul,←int.coe_nat_mul,←int.coe_nat_mul,←int.coe_nat_mul,←int.coe_nat_add,mul_comm _ 4,mul_comm _ 8],
+    simp,
+  },
+  { have H0 : (count 6 (filter (λ (l : ℕ), l = 4) (G.loops))) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    have H0 : count 6 (filter (λ (l : ℕ), l ≥ 8) (G.loops)) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    have H0 : count 4 (filter (λ (l : ℕ), l = 6) (G.loops)) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    have H0 : count 4 (filter (λ (l : ℕ), l ≥ 8) (G.loops)) = 0,
+      apply count_filter_eq_zero,exact dec_trivial,
+    rw H0, clear H0,
+    suffices : 0 ≤
+    int.of_nat (sum (G.chains)) +
+      (int.of_nat (sum (G.loops)) +
+         (↑(count 3 (G.chains)) +
+            (-(↑(card (G.chains)) * 4) +
+               (-(↑(card (G.loops)) * 8) + (2 * ↑(count 6 (G.loops)) + 4 * ↑(count 4 (G.loops))))))),
+    simpa,
+    have HL := loop_sum_ge G.loops G.loops_are_long_and_even,
+    have HC := chain_sum_ge G.chains G.chains_are_long,
+    rw [←countp_eq_card_filter,countp_count] at HL,
+    rw [←countp_eq_card_filter,countp_count] at HL,
+    rw [←countp_eq_card_filter,countp_count] at HC,
+    show (0 : ℤ) ≤ ↑(sum (G.chains)) +
+      (↑(sum (G.loops)) + (↑(count 3 (G.chains)) +
+            (-(↑(card (G.chains)) * (4 : ℕ)) +
+               (-(↑(card (G.loops)) * (8 : ℕ)) + ((2 : ℕ) * ↑(count 6 (G.loops)) + (4 : ℕ) * ↑(count 4 (G.loops))))))),
+    have H : 
+     8 * card (G.loops) + 4 * card (G.chains)
+    ≤
+    (sum (G.loops) + 4 * count 4 (G.loops) + 2 * count 6 (G.loops)) + (sum (G.chains) + count 3 (G.chains)) 
+     ,
+      exact add_le_add HL HC,
+    rw [←int.coe_nat_le,int.coe_nat_add,int.coe_nat_add,int.coe_nat_add,int.coe_nat_add,int.coe_nat_add] at H,
+    rw ←sub_nonneg at H,
+    suffices : (↑(sum (G.loops)) : ℤ) + ↑(4 * count 4 (G.loops)) + ↑(2 * count 6 (G.loops)) +
+        (↑(sum (G.chains)) + ↑(count 3 (G.chains))) -
+      (↑(8 * card (G.loops)) + ↑(4 * card (G.chains))) = ↑(sum (G.chains)) +
+      (↑(sum (G.loops)) +
+         (↑(count 3 (G.chains)) +
+            (-(↑(card (G.chains)) * ↑4) +
+               (-(↑(card (G.loops)) * ↑8) + (↑2 * ↑(count 6 (G.loops)) + ↑4 * ↑(count 4 (G.loops))))))),
+      rwa ←this,
+    
+    rw [←int.coe_nat_mul,←int.coe_nat_mul,←int.coe_nat_mul,←int.coe_nat_mul,←int.coe_nat_add,mul_comm _ 4,mul_comm _ 8],
+    simp,
+  }
 end
