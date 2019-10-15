@@ -11,6 +11,7 @@ open nat
 ------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------- functions on multisets ----------------------------------------------------------
 
+/-- cons_to_the_n x y m adds x copies of y to the multiset m-/
 def cons_to_the_n : ℕ → ℕ →  multiset nat →  multiset nat
 | 0 a b  := b
 | 1 a b := (multiset.cons a b) 
