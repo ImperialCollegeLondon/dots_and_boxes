@@ -909,7 +909,7 @@ begin
    cases Hs, rw ← Hc, rw Hs_left},
   unfold fcv,
   rw [Hc, Hl, multiset.card_zero, card_cons n 0, card_zero ],
-  simp, show int.of_nat n = ↑n, refl,
+  simp, 
 end 
 
 lemma cv_one_loop (G : sle) (n : nat) (Hc : G.chains = 0) (Hl : G.loops = (n :: 0)) : cv G = n :=
@@ -921,7 +921,7 @@ begin
   { exfalso, apply multiset.singleton_ne_zero n, rw [← Hl, h_1 ]},
   unfold fcv,
   rw [Hc, Hl, multiset.card_zero, card_cons n 0, card_zero ],
-  simp, show int.of_nat n = ↑n , refl, 
+  simp, 
 end
 
 
