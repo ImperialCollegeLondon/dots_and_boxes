@@ -1,6 +1,14 @@
 import data.multiset
 import extended_N_le tactic.ring
 
+open nat
+
+/-- cons_to_the_n x y m adds x copies of y to the multiset m-/
+def cons_to_the_n : ℕ → ℕ →  multiset nat →  multiset nat
+| 0 a b  := b
+| 1 a b := (multiset.cons a b) 
+| (succ n) a b := multiset.cons a (cons_to_the_n n a b) 
+
 
 /-- definition of a simple loony endgame (=sle) explicitly metioning 3c's, 4l's and 6'ls-/
 /- from now on referred to as long def when the context is clear-/
@@ -180,9 +188,9 @@ else 4
 -- without those 6 lines of gobble-de-gook above, the below lines don't work
 definition tb_aux (C L : multiset ℕ) : ℕ := if (C = 0 ∧ L = 0) then 0 else
   if L = 0 then 4 else
-  if C = 0 then 8 else
-  if ∃ a : ℕ, a ≥ 4 ∧ a ∈ C then 4 else 
-  6
+  if C = 0 then 8 else sorry
+  --if ∃ a : ℕ, a ≥ 4 ∧ a ∈ C then 4 else 
+  --6
 
 def tb (G : sle)  :=
 if size G = 0 then 0
