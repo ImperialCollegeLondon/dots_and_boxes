@@ -183,14 +183,24 @@ else if multiset.card (simple_loony_endgame.long_loops G) + simple_loony_endgame
 else if simple_loony_endgame.long_chains G = multiset.zero then 6
 else 4
 
+/-- Being in a multiset and satisfying a decidable predicate is decidable -/
+instance decidable_exists_multiset {α : Type*} (s : multiset α)
+  (p : α → Prop) [decidable_pred p] :
+  decidable (∃ x ∈ s, p x) := quotient.rec_on s
+list.decidable_exists_mem (λ a b h, subsingleton.elim _ _)
 
+/-- Being in a multiset and being ≥ n is decidable -/
+instance (C : multiset ℕ) (n : ℕ) : decidable (∃ a : ℕ, n ≤ a ∧ a ∈ C) :=
+suffices this : decidable (∃ a ∈ C, a ≥ n),
+by { resetI, apply @decidable_of_iff _ _ _ this, apply exists_congr, intro, tauto },
+by { apply_instance }
 
--- without those 6 lines of gobble-de-gook above, the below lines don't work
+/-- auxiliary function used to define terminal bonus -/
 definition tb_aux (C L : multiset ℕ) : ℕ := if (C = 0 ∧ L = 0) then 0 else
   if L = 0 then 4 else
-  if C = 0 then 8 else sorry
-  --if ∃ a : ℕ, a ≥ 4 ∧ a ∈ C then 4 else 
-  --6
+  if C = 0 then 8 else 
+  if ∃ a : ℕ, 4 ≤ a ∧ a ∈ C then 4 else 
+  6
 
 def tb (G : sle)  :=
 if size G = 0 then 0
