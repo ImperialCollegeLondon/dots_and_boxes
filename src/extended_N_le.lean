@@ -68,10 +68,10 @@ end dots_and_boxes
 
 -- something of type "option ℕ" is either "some n" or "none" (which is +infinity).
 
-#eval min (some 4) (some 7) -- some 4
-#eval min (some 6) (none) -- some 6
-#eval min (none) (some 12) -- some 12
-#eval min (none:option ℕ) (none) -- none
+--#eval min (some 4) (some 7) -- some 4
+--#eval min (some 6) (none) -- some 6
+--#eval min (none) (some 12) -- some 12
+--#eval min (none:option ℕ) (none) -- none
 
 -- a true "min" function on multiset (option ℕ)
 
@@ -82,8 +82,8 @@ end dots_and_boxes
 def multiset.option_N_min (s : multiset (option ℕ)) : option ℕ :=
   multiset.fold (min) none s 
 
-#eval multiset.option_N_min ↑[some 1,some 2,some 3] -- some 1
-#eval multiset.option_N_min ↑[(none:option ℕ),none,none] -- none
+--#eval multiset.option_N_min ↑[some 1,some 2,some 3] -- some 1
+--#eval multiset.option_N_min ↑[(none:option ℕ),none,none] -- none
 
 -- the min function we want on multiset ℕ
 
@@ -91,6 +91,7 @@ def dots_and_boxes.option_N_to_N : option ℕ → ℕ
 | none := 0
 | (some n) := n
 
+/-- returns smallest element of a multiset, or 0 if the multiset is empty -/
 def multiset.N_min (s : multiset ℕ) : ℕ := dots_and_boxes.option_N_to_N $ multiset.option_N_min $ multiset.map some s
 
 -- the up-arrows mean "turn this list into a multiset"
