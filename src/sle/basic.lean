@@ -17,9 +17,9 @@ structure simple_loony_endgame :=
 (four_loops : ℕ)
 (six_loops : ℕ)
 (long_chains : multiset ℕ)
-(long_chains_are_long : ∀ x ∈ long_chains, x ≥ 4)
+(long_chains_are_long : ∀ x ∈ long_chains, 4 ≤ x)
 (long_loops : multiset ℕ)
-(long_loops_are_long : ∀ x ∈ long_loops, x ≥ 8)
+(long_loops_are_long : ∀ x ∈ long_loops, 8 ≤ x)
 (long_loops_are_even : ∀ x ∈ long_loops, 2 ∣ x)
 
 /-- empty game regarding long def-/
@@ -34,14 +34,17 @@ definition empty_game : simple_loony_endgame :=
   long_loops_are_even := λ x Hx, false.elim Hx 
 }
 
+/--size of a simple_loony_endgame (number of components)-/
 def size_G (G : simple_loony_endgame) :=
 simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
 + simple_loony_endgame.six_loops G + multiset.card (simple_loony_endgame.long_loops G) 
 + multiset.card (simple_loony_endgame.long_chains G)
 
+/--multiset containing all chains of a simple_loony_endgame-/
 def all_chains (G : simple_loony_endgame): multiset nat :=
 (cons_to_the_n G.three_chains 3 G.long_chains)
 
+/--multiset containing all loops of a simple_loony_endgame-/
 def all_loops (G : simple_loony_endgame):=
 (cons_to_the_n G.four_loops 4 (cons_to_the_n G.six_loops 6 G.long_loops))
 
@@ -51,9 +54,9 @@ def all_loops (G : simple_loony_endgame):=
 --from now on referred to as short def when the context is clear
 structure sle :=
 (chains : multiset ℕ)
-(chains_are_long : ∀ x ∈ chains, x ≥ 3)
+(chains_are_long : ∀ x ∈ chains, 3 ≤ x)
 (loops : multiset ℕ)
-(loops_are_long_and_even : ∀ x ∈ loops, x ≥ 4 ∧ 2 ∣ x)
+(loops_are_long_and_even : ∀ x ∈ loops, 4 ≤ x ∧ 2 ∣ x)
 
 /-- empty game regarding short def-/
 definition empty_game_sle : sle := {chains := ∅,chains_are_long := dec_trivial, 
@@ -61,15 +64,15 @@ definition empty_game_sle : sle := {chains := ∅,chains_are_long := dec_trivial
 
 
 
-
-
+/-- auxiliary function used to define the size of an sle -/
 definition size_aux (C L : multiset ℕ) := multiset.card C + multiset.card L 
 
+/--size of a sle (number of components)-/
 def size (e : sle) : ℕ := multiset.card e.chains + multiset.card e.loops
 
 
 
-
+/-- auxiliary function used to define value -/
 def value_aux : multiset ℕ → multiset ℕ → ℕ
 | C L := multiset.N_min (multiset.pmap 
       (λ a (h : a ∈ C), 
@@ -102,7 +105,7 @@ using_well_founded {rel_tac := λ _ _, `[exact ⟨_, measure_wf
   ))
 
 -/
-
+/-- auxilary lemma for value equality between sle -/
 lemma value_aux_eq (C L : multiset ℕ) : 
 value_aux C L = multiset.N_min 
   (multiset.pmap
@@ -115,8 +118,10 @@ value_aux C L = multiset.N_min
         L (λ _,id)
   ) := value_aux._main.equations._eqn_1 C L 
 
+/--value of a simple_loony_endgame-/
 definition value_G (G : simple_loony_endgame) := value_aux (all_chains G) (all_loops G)
 
+/--value of a sle-/
 definition value (G : sle) := value_aux G.chains G.loops
 
 
@@ -154,7 +159,7 @@ multiset.pmap :
 -/
 
 
-
+/--fully controlled value of a simple_loony_endgame-/
 def fcv_G (G : simple_loony_endgame): int :=
 simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G 
 + simple_loony_endgame.six_loops G + int.of_nat (multiset.sum (simple_loony_endgame.long_loops G) )
@@ -162,19 +167,20 @@ simple_loony_endgame.three_chains G + simple_loony_endgame.four_loops G
 - (multiset.card (simple_loony_endgame.long_chains G) + 1)*4 
 - (multiset.card (simple_loony_endgame.long_loops G) + 2)*8 
 
+/--fully controlled value of a sle-/
 def fcv (G : sle):= int.of_nat (multiset.sum G.chains) + int.of_nat (multiset.sum G.loops) - (multiset.card (G.chains))*4 
 - (multiset.card (G.loops))*8 
 
 
 
-
+/-- auxiliary function used to define fully controlled value -/
 definition fcv_aux (C L : multiset ℕ) : ℤ := ↑(multiset.sum C + multiset.sum L) 
   - 4 * multiset.card C - 8 * multiset.card L
 
 definition fcv_KB (G : sle) : ℤ := fcv_aux G.chains G.loops
 
 
-
+/--terminal bonus of a simple_loony_endgame-/
 def tb_G (G : simple_loony_endgame)  :=
 if size_G G = 0 then 0
 else if multiset.card (simple_loony_endgame.long_chains G) + simple_loony_endgame.three_chains G = 0 then 8
@@ -202,6 +208,7 @@ definition tb_aux (C L : multiset ℕ) : ℕ := if (C = 0 ∧ L = 0) then 0 else
   if ∃ a : ℕ, 4 ≤ a ∧ a ∈ C then 4 else 
   6
 
+/--terminal bonus of a sle-/
 def tb (G : sle)  :=
 if size G = 0 then 0
 else if  G.loops = 0 then 4
@@ -211,9 +218,11 @@ else if multiset.erase_dup (G.chains) = (multiset.cons 3 0) then 6
 else 4
 
 
-
+/--controlled value of a simple_loony_endgame-/
 def cv_G (G : simple_loony_endgame) : int := fcv_G G + tb_G G
 
+/-- auxiliary function used to define controlled value -/
 definition cv_aux (C L : multiset ℕ) : ℤ := fcv_aux C L + tb_aux C L
 
+/--controlled value of a sle-/
 def cv (G : sle): int := fcv G + tb G
