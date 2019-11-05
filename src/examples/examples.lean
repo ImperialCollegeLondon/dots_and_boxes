@@ -16,9 +16,6 @@ def G2 : sle :=
   loops := {4},
   loops_are_long_and_even := dec_trivial }
 
-<<<<<<< HEAD
---#eval value G2
-=======
 --#eval value G2 -- takes about 7 seconds to produce value 2
 
 -- auxiliary function which computes the same thing in under a second
@@ -35,4 +32,3 @@ def G2 : sle :=
   The three checks are: (a) 8 + 1 = 9 (b) 8 <= number of chains (c) 1 <= number of loops
 
 -/
->>>>>>> 69eabf87a975f05a7677b7db9adcf1b26e08e478
