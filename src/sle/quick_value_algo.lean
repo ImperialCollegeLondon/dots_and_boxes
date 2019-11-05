@@ -25,6 +25,6 @@ using_well_founded {rel_tac := λ _ _, `[exact ⟨_, measure_wf
   (λ CL, multiset.card CL.fst + multiset.card CL.snd)⟩]}
 
 
-definition quick_value_algo (G : sle) :=  
-/-if 
+definition quick_value_algo (G : sle) :=  value_aux G.chains G.loops
+/-i
  

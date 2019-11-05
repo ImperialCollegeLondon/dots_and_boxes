@@ -15,4 +15,4 @@ def G2 : sle :=
   loops := {4},
   loops_are_long_and_even := dec_trivial }
 
-#eval value G2
+--#eval value G2
