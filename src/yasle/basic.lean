@@ -44,3 +44,8 @@ end)
   (a - 2 + int.nat_abs (2 - val_aux n C (b :: L) c (succ l) (begin rw succ_add at h, exact succ_inj h end)
   (pred_le_iff.mpr hc) hl))
   (b - 4 + int.nat_abs (4 - val_aux n (a :: C) L (succ c) l (succ_inj h) hc (pred_le_iff.mpr hl)))
+
+
+/--size of a yasle (number of components)-/
+def yasize (y : yasle) : ℕ := multiset.card y.chains + multiset.card y.loops
+
