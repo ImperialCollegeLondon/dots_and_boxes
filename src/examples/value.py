@@ -24,7 +24,7 @@ def value_comp(Chains,Loops):
     return value(Chains,Loops)
 
 def rand_chains():
-    length = np.random.randint(1,20)
+    length = np.random.randint(1,10)
     return np.random.randint(3,10,length)
 
 def rand_loops():
