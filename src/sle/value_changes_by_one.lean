@@ -2,14 +2,15 @@ import sle.basic_odd_loops
 import data.multiset
 
 
-
+/--Incrementing one component of a multiset of naturals by one-/
 def multiset_one_comp_plus_one (A : multiset ℕ )(a : ℕ )(P : a ∈ A): multiset ℕ  :=
 (a+1) :: (multiset.erase A a)
 
+/--Decrementing one component of a multiset of naturals by one-/
 def multiset_one_comp_minus_one (A : multiset ℕ )(a : ℕ )(P : a ∈ A): multiset ℕ  :=
 (a-1) :: (multiset.erase A a)
 
-
+/--increasing the length of one loop of a olsle by one-/
 def one_loop_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops): olsle:= 
 {
   chains := (olsle.chains G),
@@ -21,6 +22,7 @@ def one_loop_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops): olsle:=
   have H2 : x ∈ G.loops, by exact multiset.mem_of_mem_erase H, finish, end,
 }
 
+/--decreasing the length of one loop of a olsle by one-/
 def one_loop_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops)(P2 : 5 ≤ a): olsle:= 
 {
   chains := (olsle.chains G),
@@ -34,7 +36,7 @@ def one_loop_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops)(P2 : 5 ≤ a): o
 
 
 
-
+/--increasing the length of one chain of a olsle by one-/
 def one_chain_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains): olsle:= 
 {
   chains := multiset_one_comp_plus_one G.chains a P,
@@ -46,6 +48,7 @@ def one_chain_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains): olsle:=
   loops_are_long := G.loops_are_long
 }
 
+/--decreasing the length of one Chain of a olsle by one-/
 def one_chain_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains)(P2 : 4 ≤ a): olsle:= 
 {
   chains := multiset_one_comp_minus_one G.chains a P,
@@ -59,31 +62,28 @@ def one_chain_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains)(P2 : 4 ≤ a):
 
 
 
---def one_comp_changed_by_one (G : olsle): olsle:= one_chain_minus_one ∨ one_chain_plus_one
---∨ one_loop_minus_one ∨ one_loop_plus_one
 
-
-
+/--increasing the length of one loop of a olsle by one changes the value of the game by one-/
 theorem value_loop_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops) (G' : olsle) (G' = (one_loop_plus_one G a P)) :
 olvalue G' = olvalue G + 1 ∨ olvalue G' = olvalue G - 1 := 
 begin 
 sorry
 end
-
+/--decreasing the length of one loop of a olsle by one changes the value of the game by one-/
 theorem value_loop_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops) (P2 : 5 ≤ a) (G' : olsle) (G' = (one_loop_minus_one G a P P2)) :
 olvalue G' = olvalue G + 1 ∨ olvalue G' = olvalue G - 1 := 
 begin 
 sorry
 end
 
-
+/--increasing the length of one chain of a olsle by one changes the value of the game by one-/
 theorem value_chain_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains) (G' : olsle) (G' = (one_chain_plus_one G a P)) :
 olvalue G' = olvalue G + 1 ∨ olvalue G' = olvalue G - 1 := 
 begin 
 sorry
 end
 
-
+/--decreasing the length of one chain of a olsle by one changes the value of the game by one-/
 theorem value_chain_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains) (P2 : 4 ≤ a)(G' : olsle) (G' = (one_chain_minus_one G a P P2)) :
 olvalue G' = olvalue G + 1 ∨ olvalue G' = olvalue G - 1 := 
 begin 
