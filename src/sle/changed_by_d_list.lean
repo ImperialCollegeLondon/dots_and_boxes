@@ -46,9 +46,10 @@ C [] → (∀ n : ℕ,
 
 def chain_value : list ℤ → ℤ := list.rec_on_length 0 $
 λ n H (L : list ℤ) hL, list.min
-(list.of_fn $ λ (i : fin (n + 1)), (L.nth_le i.val $ hL.symm ▸ i.2) - 2 + abs (2 - (H (L.remove_nth i.val) begin
+(list.of_fn $ λ (i : fin (n + 1)), (L.nth_le i.val $ hL.symm ▸ i.2) - 2 + (2 - H (L.remove_nth i.val) begin
   sorry -- removing elt from a list decreases length by 1
-end))
+end)
+)
 begin
   intro h,
   have h2 : length(@list.nil ℤ) = 0,
@@ -56,7 +57,7 @@ begin
   rw ←h at h2,
   rw list.length_of_fn at h2,
   cases h2,
-end)
+end
 
 /- todo
 
