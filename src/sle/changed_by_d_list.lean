@@ -1,4 +1,4 @@
-import data.list.basic
+import data.list.basic tactic.linarith
 
 open list
 
@@ -23,11 +23,30 @@ def list.modify.symm (A B : list ℤ) (d : ℕ)
 structure game :=
 (C : list ℤ) (L : list ℤ)
 
-inductive game.modify (G1 G2 : game) (d : ℕ)
-| modifyc : list.modify G1.C G2.C d → (G1.L = G2.L) → game.modify
-| modifyl : list.modify G1.L G2.L d → (G1.C = G2.C) → game.modify
+namespace game
 
-def game.size (G : game) : ℕ := list.length G.C + list.length G.L
+@[extensionality] def ext (G1 G2 : game) : G1 = G2 ↔ G1.C = G2.C ∧ G1.L = G2.L :=
+by cases G1; cases G2; simp
+
+-- for use later, in the MITM proof
+inductive modify (G1 G2 : game) (d : ℕ)
+| modifyc : list.modify G1.C G2.C d → (G1.L = G2.L) → modify
+| modifyl : list.modify G1.L G2.L d → (G1.C = G2.C) → modify
+
+def size (G : game) : ℕ := list.length G.C + list.length G.L
+
+def zero : game := ⟨[], []⟩
+
+lemma size_zero : zero.size = 0 := rfl
+
+lemma eq_zero_of_size_zero {G : game} : G.size = 0 → G = zero :=
+begin
+  intro h,
+  replace h := nat.eq_zero_of_add_eq_zero h,
+  cases h with h1 h2,
+  rw length_eq_zero at h1 h2,
+  cases G, cases h1, cases h2, refl,
+end
 
 def list.min {X : Type*} [decidable_linear_order X] :
 Π (L : list X), (L ≠ []) → X
@@ -35,36 +54,36 @@ def list.min {X : Type*} [decidable_linear_order X] :
 | (x :: []) hL := x
 | (x :: y :: L) _ := min x (list.min (y :: L) dec_trivial)
 
---def aux_fn (L : list ℤ) : fin (L.length) → ℤ :=
---λ i, i.val - 2 +int.nat_abs (value)
+def game.rec_on_size' (C : game → Sort*) :
+(∀ G : game, G.size = 0 → C G) → (∀ n : ℕ, 
+  (∀ G : game, G.size = n → C G) → (∀ G : game, G.size = n + 1 → C G)) →
+  ∀ m : ℕ, ∀ G : game, G.size = m → C G := λ z ih n, nat.rec z ih n
 
-@[elab_as_eliminator]
-def list.rec_on_length {X : Type*} {C : list X → Sort*} :
-C [] → (∀ n : ℕ,
-  (∀ L : list X, L.length = n → C L) → (∀ L : list X, L.length = n + 1 → C L)) →
-  ∀ L : list X, C L := sorry
+universe u
+--@[elab_as_eliminator]
+def game.rec_on_size {C : game → Sort u} :
+C zero → (∀ n : ℕ, 
+  (∀ G : game, G.size = n → C G) → (∀ G : game, G.size = n + 1 → C G)) →
+  ∀ G : game, C G :=
+λ z ih G, @game.rec_on_size' C (λ H hH, (by rwa eq_zero_of_size_zero hH : C H)) ih (G.size) _ rfl
 
-def chain_value : list ℤ → ℤ := list.rec_on_length 0 $
-λ n H (L : list ℤ) hL, list.min
-(list.of_fn $ λ (i : fin (n + 1)), (L.nth_le i.val $ hL.symm ▸ i.2) - 2 + (2 - H (L.remove_nth i.val) begin
-  sorry -- removing elt from a list decreases length by 1
-end)
-)
-begin
-  intro h,
-  have h2 : length(@list.nil ℤ) = 0,
-    simp,
-  rw ←h at h2,
-  rw list.length_of_fn at h2,
-  cases h2,
-end
+def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
+  list.min 
+    ((list.of_fn $ λ (i : fin G.C.length),
+    G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
+      sorry
+    end)) ++ (list.of_fn $ λ (i : fin G.L.length),
+    G.L.nth_le i.val i.is_lt - 4 + abs (4 - hn {C := G.C, L := G.L.remove_nth i.val} begin
+      sorry
+    end))) 
+    begin
+      sorry
+    end
 
 /- todo
 
-1) list.rec_on_length (KB to do)
-2) fill in sorry for chain_value
-3) write loop_value (change two 2's to 4's)
-4) write game_value : list ℤ → list ℤ → ℤ -- nice challenge!
-5) Finally prove a theorem about game_value (maybe next week?)
+1) Fill in sorrys (first two shouldn't be hard, third might be more of a challenge, but I am pretty
+sure I can do it)
+2) Prove that if `h : game.modify G1 G2 d` then int.nat_abs(G1.value - G2.value) <= d by induction on size
 
 -/
