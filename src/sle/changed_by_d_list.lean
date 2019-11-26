@@ -100,7 +100,22 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
       apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
     end.
 
-example (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : int.nat_abs(G1.value - G2.value) ≤ d :=
+-- this looks easier
+theorem eq_size_of_modify (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : G1.size = G2.size :=
+begin
+  sorry
+end
+
+-- this will be harder
+theorem list.min_change (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℕ)
+(hdist : ∀ (i : ℕ) (hiL : i < L.length) (hiM : i < M.length), int.nat_abs (L.nth_le i hiL - M.nth_le i hiM) ≤ d) :
+  int.nat_abs (L.min hL - M.min hM) ≤ d :=
+begin
+  sorry
+end
+
+-- this is the big challenge
+theorem MITM (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : int.nat_abs(G1.value - G2.value) ≤ d :=
 begin
   revert G1,
   revert G2,
@@ -108,6 +123,8 @@ begin
   -- this might be tricky!
   sorry, sorry
 end
+
+
 /- todo
 
 1) Fill in sorrys (first two shouldn't be hard, third might be more of a challenge, but I am pretty
