@@ -68,10 +68,7 @@ C zero → (∀ n : ℕ,
   ∀ G : game, C G :=
 λ z ih G, @game.rec_on_size' C (λ H hH, (by rwa eq_zero_of_size_zero hH : C H)) ih (G.size) _ rfl
 
-lemma tailtail { α : Type } (l : list α ): l = take 1 l ++ tail l :=
-  begin
-   sorry,
-  end
+
 
 
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
@@ -96,8 +93,9 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
        generalize hl:length G_L = l, rw hl at *,clear hc, clear G_C,clear hl G_L hn ,  omega, refl, 
     end))) 
     begin
-      cases G, sorry
+      apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
     end
+
 
 /- todo
 
