@@ -75,7 +75,7 @@ C game.zero → (∀ n : ℕ,
 
 
 
-def value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
+def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
     ((list.of_fn $ λ (i : fin G.C.length),
     G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
@@ -100,7 +100,14 @@ def value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G 
       apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
     end.
 
-
+example (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : int.nat_abs(G1.value - G2.value) ≤ d :=
+begin
+  revert G1,
+  revert G2,
+  apply @game.rec_on_size (λ G2, ∀ G1, modify G1 G2 d → int.nat_abs (game.value G1 - game.value G2) ≤ d),
+  -- this might be tricky!
+  sorry, sorry
+end
 /- todo
 
 1) Fill in sorrys (first two shouldn't be hard, third might be more of a challenge, but I am pretty
