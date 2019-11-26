@@ -49,6 +49,10 @@ begin
   cases G, cases h1, cases h2, refl,
 end
 
+end game
+
+open game
+
 def list.min {X : Type*} [decidable_linear_order X] :
 Π (L : list X), (L ≠ []) → X
 | ([]) hL := false.elim $ hL rfl
@@ -63,7 +67,7 @@ def game.rec_on_size' (C : game → Sort*) :
 universe u
 --@[elab_as_eliminator]
 def game.rec_on_size {C : game → Sort u} :
-C zero → (∀ n : ℕ, 
+C game.zero → (∀ n : ℕ, 
   (∀ G : game, G.size = n → C G) → (∀ G : game, G.size = n + 1 → C G)) →
   ∀ G : game, C G :=
 λ z ih G, @game.rec_on_size' C (λ H hH, (by rwa eq_zero_of_size_zero hH : C H)) ih (G.size) _ rfl
@@ -71,7 +75,7 @@ C zero → (∀ n : ℕ,
 
 
 
-def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
+def value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
     ((list.of_fn $ λ (i : fin G.C.length),
     G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
@@ -94,7 +98,7 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
     end))) 
     begin
       apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
-    end
+    end.
 
 
 /- todo
@@ -104,4 +108,4 @@ sure I can do it)
 2) Prove that if `h : game.modify G1 G2 d` then int.nat_abs(G1.value - G2.value) <= d by induction on size
 
 -/
-end game
+
