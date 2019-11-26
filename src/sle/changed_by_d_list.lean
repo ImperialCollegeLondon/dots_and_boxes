@@ -25,7 +25,7 @@ structure game :=
 (C : list ℤ) (L : list ℤ)
 
 namespace game
-
+--extensionaliti changes in new mathlib
 @[extensionality] def ext (G1 G2 : game) : G1 = G2 ↔ G1.C = G2.C ∧ G1.L = G2.L :=
 by cases G1; cases G2; simp
 
@@ -88,10 +88,15 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
       
     end)) ++ (list.of_fn $ λ (i : fin G.L.length),
     G.L.nth_le i.val i.is_lt - 4 + abs (4 - hn {C := G.C, L := G.L.remove_nth i.val} begin
-      sorry
+     unfold size, unfold size at hG, cases G,  rw remove_nth_eq_nth_tail,
+      rw modify_nth_tail_eq_take_drop, show length G_C + length (take (i.val) G_L ++ tail (drop (i.val) G_L)) = n,
+      rw list.length_append, rw length_take, rw length_tail, rw length_drop, 
+      cases i with hi hj, show length G_C + (min hi (length G_L) + (length G_L - hi - 1)) = n, 
+      rw min_eq_left(le_of_lt hj), dsimp at hj, dsimp at hG, generalize hc:length G_C = c, rw hc at *,
+       generalize hl:length G_L = l, rw hl at *,clear hc, clear G_C,clear hl G_L hn ,  omega, refl, 
     end))) 
     begin
-      sorry
+      cases G, sorry
     end
 
 /- todo
@@ -101,3 +106,4 @@ sure I can do it)
 2) Prove that if `h : game.modify G1 G2 d` then int.nat_abs(G1.value - G2.value) <= d by induction on size
 
 -/
+end game
