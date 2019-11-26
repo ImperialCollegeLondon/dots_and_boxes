@@ -1,4 +1,5 @@
 import data.list.basic tactic.linarith
+import tactic.omega
 
 open list
 
@@ -78,8 +79,12 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
     ((list.of_fn $ λ (i : fin G.C.length),
     G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
       unfold size, unfold size at hG, cases G,  rw remove_nth_eq_nth_tail,
-      rw modify_nth_tail_eq_take_drop, rw tailtail ({C := take (i.val) ({C := G_C, L := G_L}.C)),
-      sorry, refl, 
+      rw modify_nth_tail_eq_take_drop, show length (take (i.val) G_C ++ tail (drop (i.val) G_C)) + length G_L = n,
+      rw list.length_append, rw length_take, rw length_tail, rw length_drop, 
+      cases i with hi hj, show min hi (length G_C) + (length G_C - hi - 1) + length G_L = n,
+      rw min_eq_left(le_of_lt hj), dsimp at hj, dsimp at hG, generalize hc:length G_C = c, rw hc at *,
+       generalize hl:length G_L = l, rw hl at *,clear hc, clear G_C,clear hl G_L hn ,  omega, 
+       refl, 
       
     end)) ++ (list.of_fn $ λ (i : fin G.L.length),
     G.L.nth_le i.val i.is_lt - 4 + abs (4 - hn {C := G.C, L := G.L.remove_nth i.val} begin
