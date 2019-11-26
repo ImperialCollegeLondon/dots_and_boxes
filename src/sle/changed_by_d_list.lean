@@ -67,11 +67,20 @@ C zero → (∀ n : ℕ,
   ∀ G : game, C G :=
 λ z ih G, @game.rec_on_size' C (λ H hH, (by rwa eq_zero_of_size_zero hH : C H)) ih (G.size) _ rfl
 
+lemma tailtail { α : Type } (l : list α ): l = take 1 l ++ tail l :=
+  begin
+   sorry,
+  end
+
+
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
     ((list.of_fn $ λ (i : fin G.C.length),
     G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
-      sorry
+      unfold size, unfold size at hG, cases G,  rw remove_nth_eq_nth_tail,
+      rw modify_nth_tail_eq_take_drop, rw tailtail ({C := take (i.val) ({C := G_C, L := G_L}.C)),
+      sorry, refl, 
+      
     end)) ++ (list.of_fn $ λ (i : fin G.L.length),
     G.L.nth_le i.val i.is_lt - 4 + abs (4 - hn {C := G.C, L := G.L.remove_nth i.val} begin
       sorry
