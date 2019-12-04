@@ -100,10 +100,29 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
       apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
     end.
 
+
+
+
+-- this looks easier
+theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℕ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
+begin
+  cases h, have P : length(remove_nth l1 h_n) = length(remove_nth l2 h_n), rw h_heq, 
+  rw length_remove_nth  at P, rw length_remove_nth  at P,  have Q : ¬ h_n < 0, simp,
+  cases l1, dsimp at h_ha, exfalso, finish, cases l2, dsimp at h_hb,
+  exfalso, finish, finish, exact h_hb, exact h_ha,
+  end
+
+
+
+
 -- this looks easier
 theorem eq_size_of_modify (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : G1.size = G2.size :=
 begin
-  sorry
+  cases h, 
+  unfold size, rw h_a_1, rw @add_right_cancel_iff _ _ (G2.L).length,  
+  exact eq_size_of_modify_list G1.C G2.C d h_a,
+  unfold size, rw h_a_1, rw @add_left_cancel_iff _ _ (G2.C).length,  
+  exact eq_size_of_modify_list G1.L G2.L d h_a,
 end
 
 -- this will be harder
