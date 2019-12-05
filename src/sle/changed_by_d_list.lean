@@ -111,7 +111,7 @@ begin
 
 
 -- this looks easier
-theorem eq_size_of_modify (G1 G2 : game) (d : ℤ) (h : game.modify G1 G2 d) : G1.size = G2.size :=
+theorem eq_size_of_modify {G1 G2 : game} {d : ℤ} (h : game.modify G1 G2 d) : G1.size = G2.size :=
 begin
   cases h, 
   unfold size, rw h_a_1, rw @add_right_cancel_iff _ _ (G2.L).length,  
@@ -168,25 +168,22 @@ begin
     exact abs_min_sub_min hmn h}
 end
 
---should it not actually be like this? (Unless we add the assumption that lists are ordered and list elements are greater than 0)
-theorem list.min_change2 (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℕ)
-(hdist : ∀ (i : ℕ) (j : ℕ) (hiL : i < L.length) (hiM : j < M.length), int.nat_abs (L.nth_le i hiL - M.nth_le j hiM) ≤ d) :
-  int.nat_abs (L.min hL - M.min hM) ≤ d :=
-begin
-  show int.nat_abs (list.min L hL + -list.min M hM) ≤ d,  sorry, 
-end
 
 -- this is the big challenge
-theorem MITM (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : int.nat_abs(G1.value - G2.value) ≤ d :=
+theorem MITM (G1 G2 : game) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
+ abs(G1.value - G2.value) ≤ d :=
 begin
   revert G1,
   revert G2,
-  apply @game.rec_on_size (λ G2, ∀ G1, modify G1 G2 d → int.nat_abs (game.value G1 - game.value G2) ≤ d),
+  apply @game.rec_on_size (λ G2, ∀ G1, modify G1 G2 d → 
+  abs (game.value G1 - game.value G2) ≤ d),
   -- this might be tricky!
-  sorry, sorry
+  { intros G h1, have h3 : G.size = zero.size := eq_size_of_modify h1,
+  rw size_zero at h3, have H := eq_zero_of_size_zero h3, 
+  rw H, show  0 ≤ d, exact h2},
+   {rintro n H G1 p G2 (⟨ p2, ha ⟩ | ⟨ p2, ha ⟩ ) , {unfold game.value,   sorry}, {sorry}}
+
 end
-
-
 /- todo
 
 1) Fill in sorrys (first two shouldn't be hard, third might be more of a challenge, but I am pretty
