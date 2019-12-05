@@ -181,8 +181,23 @@ begin
   { intros G h1, have h3 : G.size = zero.size := eq_size_of_modify h1,
   rw size_zero at h3, have H := eq_zero_of_size_zero h3, 
   rw H, show  0 ≤ d, exact h2},
-   {rintro n H G1 p G2 (⟨ p2, ha ⟩ | ⟨ p2, ha ⟩ ) , {unfold game.value,   sorry}, {sorry}}
-
+  { intros n H G1 p G2 p2,
+    have hs := eq_size_of_modify p2,
+    rw p at hs,
+    unfold game.value,
+    unfold game.rec_on_size,
+    unfold game.rec_on_size',
+--    dsimp,
+    simp only [hs, p, (nat.succ_eq_add_one n).symm],
+    apply list.min_change,
+    { rw [length_append, length_of_fn, length_of_fn, length_append, length_of_fn, length_of_fn],
+      show G2.size = G1.size,
+      rw [p, hs]},
+    intros i hiL hiM,
+    rw [length_append, length_of_fn, length_of_fn] at hiL hiM,
+    dsimp, 
+    sorry
+  },
 end
 /- todo
 
