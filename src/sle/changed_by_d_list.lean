@@ -134,7 +134,7 @@ begin
 
 end
 
---should it not actually be like this? (Unless we add the assumption that lists are ordered)
+--should it not actually be like this? (Unless we add the assumption that lists are ordered and list elements are greater than 0)
 theorem list.min_change2 (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℕ)
 (hdist : ∀ (i : ℕ) (j : ℕ) (hiL : i < L.length) (hiM : j < M.length), int.nat_abs (L.nth_le i hiL - M.nth_le j hiM) ≤ d) :
   int.nat_abs (L.min hL - M.min hM) ≤ d :=
