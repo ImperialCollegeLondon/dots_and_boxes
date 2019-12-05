@@ -1,24 +1,24 @@
 import data.list.basic tactic.linarith
-import tactic.omega
+import tactic.omega tactic.apply
 
 open list
 
 -- changing one element of a list by at most d
 
-structure list.modify (A : list ℤ) (B : list ℤ) (d : ℕ) :=
+structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 (n : ℕ)
 (ha : n < A.length)
 (hb : n < B.length)
 (heq : A.remove_nth n = B.remove_nth n)
-(bound : int.nat_abs (A.nth_le n ha - B.nth_le n hb) ≤ d)
+(bound : abs (A.nth_le n ha - B.nth_le n hb) ≤ d)
 
-def list.modify.symm (A B : list ℤ) (d : ℕ) 
+def list.modify.symm (A B : list ℤ) (d : ℤ) 
 (m : list.modify A B d) : list.modify B A d :=
 { n := m.n,
   ha := m.hb,
   hb := m.ha,
   heq := m.heq.symm,
-  bound := by rw [←neg_sub, int.nat_abs_neg]; exact m.bound
+  bound := by rw [←neg_sub, abs_neg]; exact m.bound
 }
 
 structure game :=
@@ -26,11 +26,11 @@ structure game :=
 
 namespace game
 --extensionaliti changes in new mathlib
-@[extensionality] def ext (G1 G2 : game) : G1 = G2 ↔ G1.C = G2.C ∧ G1.L = G2.L :=
+@[ext] def ext (G1 G2 : game) : G1 = G2 ↔ G1.C = G2.C ∧ G1.L = G2.L :=
 by cases G1; cases G2; simp
 
 -- for use later, in the MITM proof
-inductive modify (G1 G2 : game) (d : ℕ)
+inductive modify (G1 G2 : game) (d : ℤ)
 | modifyc : list.modify G1.C G2.C d → (G1.L = G2.L) → modify
 | modifyl : list.modify G1.L G2.L d → (G1.C = G2.C) → modify
 
@@ -100,11 +100,8 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
       apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
     end.
 
-
-
-
 -- this looks easier
-theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℕ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
+theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℤ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
 begin
   cases h, have P : length(remove_nth l1 h_n) = length(remove_nth l2 h_n), rw h_heq, 
   rw length_remove_nth  at P, rw length_remove_nth  at P,  have Q : ¬ h_n < 0, simp,
@@ -113,10 +110,8 @@ begin
   end
 
 
-#check nth_le
-
 -- this looks easier
-theorem eq_size_of_modify (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : G1.size = G2.size :=
+theorem eq_size_of_modify (G1 G2 : game) (d : ℤ) (h : game.modify G1 G2 d) : G1.size = G2.size :=
 begin
   cases h, 
   unfold size, rw h_a_1, rw @add_right_cancel_iff _ _ (G2.L).length,  
@@ -125,13 +120,52 @@ begin
   exact eq_size_of_modify_list G1.L G2.L d h_a,
 end
 
--- this will be harder
-theorem list.min_change (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℕ)
-(hdist : ∀ (i : ℕ) (hiL : i < L.length) (hiM : i < M.length), int.nat_abs (L.nth_le i hiL - M.nth_le i hiM) ≤ d) :
-  int.nat_abs (L.min hL - M.min hM) ≤ d :=
+lemma abs_min_sub_min {a b x y d : ℤ} (hab : abs (a - b) ≤ d)
+  (hxy : abs (x - y) ≤ d) : abs (min a x - min b y) ≤ d :=
 begin
-  show int.nat_abs (list.min L hL + -list.min M hM) ≤ d, sorry, 
+  rw abs_le at *,
+  cases hab; cases hxy,
+  unfold min,
+  split_ifs; split; linarith,
+end
 
+theorem list.min_change (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℤ)
+(hdist : ∀ (i : ℕ) (hiL : i < L.length) (hiM : i < M.length), abs (L.nth_le i hiL - M.nth_le i hiM) ≤ d) :
+  abs (L.min hL - M.min hM) ≤ d :=
+begin
+  show abs (list.min L hL - list.min M hM) ≤ d,
+  revert M,
+  cases L with n L,
+    contradiction,
+  revert n,
+  induction L with n1 L IH,
+  {
+    intros n _ M hM1 _ hi,
+    change 1 = length M at hM1,
+    symmetry' at hM1,
+    rw length_eq_one at hM1,
+    cases hM1 with m hM1,
+    simp only [hM1],
+    show abs (n - m) ≤ d,
+    convert hi 0 (zero_lt_one) _,
+    simp only [hM1],
+    refl,
+    rw hM1,
+    exact zero_lt_one,
+  },
+  { intros n _ M hM _ hi,
+    cases M with m M, cases hM,
+    cases M with m1 M, cases hM,
+    unfold list.min,
+    have hmn : abs (n - m) ≤ d,
+      exact hi 0 dec_trivial dec_trivial,
+    replace hM := nat.succ_inj hM,
+    have hyp : (∀ (i : ℕ) (hiL : i < length (n1 :: L)) (hiM : i < length (m1 :: M)),
+      abs (nth_le (n1 :: L) i hiL - nth_le (m1 :: M) i hiM) ≤ d),
+      intros i hiL hiM,
+      exact hi (i + 1) (nat.succ_lt_succ hiL) (nat.succ_lt_succ hiM),
+    have h := IH n1 dec_trivial (m1 :: M) hM dec_trivial hyp,
+    exact abs_min_sub_min hmn h}
 end
 
 --should it not actually be like this? (Unless we add the assumption that lists are ordered and list elements are greater than 0)
