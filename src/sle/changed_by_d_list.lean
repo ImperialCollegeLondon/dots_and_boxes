@@ -113,7 +113,7 @@ begin
   end
 
 
-
+#check nth_le
 
 -- this looks easier
 theorem eq_size_of_modify (G1 G2 : game) (d : ℕ) (h : game.modify G1 G2 d) : G1.size = G2.size :=
@@ -130,7 +130,16 @@ theorem list.min_change (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.len
 (hdist : ∀ (i : ℕ) (hiL : i < L.length) (hiM : i < M.length), int.nat_abs (L.nth_le i hiL - M.nth_le i hiM) ≤ d) :
   int.nat_abs (L.min hL - M.min hM) ≤ d :=
 begin
-  sorry
+  show int.nat_abs (list.min L hL + -list.min M hM) ≤ d, sorry, 
+
+end
+
+--should it not actually be like this? (Unless we add the assumption that lists are ordered)
+theorem list.min_change2 (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℕ)
+(hdist : ∀ (i : ℕ) (j : ℕ) (hiL : i < L.length) (hiM : j < M.length), int.nat_abs (L.nth_le i hiL - M.nth_le j hiM) ≤ d) :
+  int.nat_abs (L.min hL - M.min hM) ≤ d :=
+begin
+  show int.nat_abs (list.min L hL + -list.min M hM) ≤ d,  sorry, 
 end
 
 -- this is the big challenge
