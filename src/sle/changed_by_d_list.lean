@@ -12,11 +12,79 @@ structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 (heq : A.remove_nth n = B.remove_nth n)
 (bound : abs (A.nth_le n ha - B.nth_le n hb) ≤ d)
 
+lemma cons_eq_sing_append {b : list ℤ} {a : ℤ}:
+(a::b) = [a] ++ b :=
+begin 
+refl,
+end
+
+-- this looks easier
+theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℤ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
+begin
+  cases h, have P : length(remove_nth l1 h_n) = length(remove_nth l2 h_n), rw h_heq, 
+  rw length_remove_nth  at P, rw length_remove_nth  at P,  have Q : ¬ h_n < 0, simp,
+  cases l1, dsimp at h_ha, exfalso, finish, cases l2, dsimp at h_hb,
+  exfalso, finish, finish, exact h_hb, exact h_ha,
+  end
+
+/-
+--WRONG
+lemma nth_le_rem_nth {A : list ℤ} {n : ℕ } : ∀ (x : ℕ) (h_neq : x ≠ n)
+(ha1: x < length A) (ha2: x < length(remove_nth A n)), 
+(nth_le A x ha1 = nth_le (remove_nth A n) x ha2):=
+begin
+intros x hx ha1 ha2, induction A with hb B,  
+dsimp at *, exact false.elim ((nat.not_lt_zero x) ha1), 
+simp only [cons_eq_sing_append B hb],
+rw cons_eq_sing_append B hb at *, 
+--rw nth_le_append_right hb ha1 , --dsimp at *,   
+--shon wieder diese Problem 
+
+sorry,
+end-/
+
+-- should probably name it nth_le_eq_head_reverse_take
+lemma nth_le_rewrite {A : list ℤ} {n : ℕ } (h : n < length A):
+nth_le A n h = head (reverse (take (n + 1) A)):=
+begin
+sorry,
+end
+
+
+
+
+
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
   (h : list.modify A B d) (m : ℕ) (hmA : m < A.length) (hmB : m < B.length)
   (hmn : h.n ≠ m) : A.nth_le m hmA = B.nth_le m hmB :=
 begin
-  sorry
+  have H : length A = length B, exact eq_size_of_modify_list A B d h,
+  cases h, rw remove_nth_eq_nth_tail at h_heq, rw modify_nth_tail_eq_take_drop at h_heq,
+  rw remove_nth_eq_nth_tail at h_heq, rw modify_nth_tail_eq_take_drop at h_heq,
+  have p : length (tail (drop h_n A)) = length (tail (drop h_n B)), rw length_tail,
+  rw length_tail, rw length_drop, rw length_drop,
+  rw H, 
+  have h_eq_left : take h_n A = take h_n B , exact append_inj_right' h_heq p,
+  have h_eq_right : tail (drop h_n A) = tail (drop h_n B), exact append_inj_left' h_heq p,
+  
+  rw nth_le_rewrite, rw nth_le_rewrite, 
+
+  sorry,
+  /-
+  induction A with a An, 
+  exact false.elim ((nat.not_lt_zero m) hmA), 
+  dsimp at *, rw nat.lt_succ_iff at hmA , 
+  have Case_h : m = length An ∨ m < length An, exact eq_or_lt_of_le hmA,
+  cases Case_h,sorry, have trivial_lemma : (a::An) = [a] ++ An, refl,
+  simp only [trivial_lemma],
+  cases m, rw nth_le_append, {rw nth_le_singleton _, sorry}, simp, 
+  rw nth_le_append_right , {sorry}, dsimp, show 0 + 1 ≤ nat.succ m,
+  apply nat.succ_le_succ, exact zero_le m, 
+  -/
+
+  refl,refl,
+
+  
 end
 
 def list.modify.symm (A B : list ℤ) (d : ℤ) 
@@ -87,13 +155,26 @@ def list.aux_fun (m tf vL : ℤ) := m - tf + abs(tf - vL)
 theorem list.aux_fun_L1 {m1 m2 tf vL d : ℤ} (hm : abs (m1 - m2) ≤ d) :
   abs(list.aux_fun m1 tf vL - list.aux_fun m2 tf vL) ≤ d :=
 begin
-  sorry 
+  unfold list.aux_fun, finish,
 end
 
 theorem list.aux_fun_L2 {m m tf vL1 vL2 d : ℤ} (hm : abs (vL1 - vL2) ≤ d) :
   abs(list.aux_fun m tf vL1 - list.aux_fun m tf vL2) ≤ d :=
 begin
-  sorry 
+ unfold list.aux_fun, rw sub_add_eq_sub_sub_swap, 
+ have Q: abs(tf - vL1 - (tf - vL2)) ≤ d, 
+ show abs (tf + -vL1 + -(tf + -vL2)) ≤ d,
+ rw add_comm tf, rw add_assoc, show abs (-vL1 + (tf - (tf + -vL2))) ≤ d,
+ rw sub_add_eq_sub_sub tf, show abs (-vL1 + (tf + - tf - -vL2)) ≤ d,
+ rw add_neg_self tf , rw ←  abs_neg, finish,  
+ 
+ rw add_comm, show abs (abs (tf + -vL1) + (m + -tf) + -abs (tf + -vL2) + -(m + -tf)) ≤ d,
+ rw add_assoc,rw add_assoc, 
+ rw add_comm (m + -tf), rw add_assoc, rw add_comm (-(m+-tf)),
+ rw add_neg_self (m+-tf), rw add_zero, 
+ have R: abs (abs (tf - vL1) - abs (tf - vL2)) ≤ abs ((tf - vL1) - (tf - vL2)),
+ exact abs_abs_sub_abs_le_abs_sub (tf - vL1) (tf - vL2),
+ exact le_trans R Q,
 end
 
 lemma abs_min_sub_min {a b x y d : ℤ} (hab : abs (a - b) ≤ d)
@@ -147,7 +228,7 @@ end
 
 definition list.value_i (tf : ℤ) :
   ∀ (n : ℕ) (L : list ℤ) (i : fin n) (hL : L.length = n), ℤ
-| (0) L i h := begin exfalso, sorry end -- i gives a contradiction
+| (0) L i h := begin exfalso,  exact fin.elim0 i, end -- i gives a contradiction
 | (d + 1) L i h := list.aux_fun (L.nth_le i.val (by rw h; exact i.is_lt)) tf (list.min' (list.of_fn $
     λ (j : fin d), list.value_i d (L.remove_nth i.val) j begin
       rw list.length_remove_nth L i.val _,
@@ -155,14 +236,37 @@ definition list.value_i (tf : ℤ) :
       rw h, exact i.is_lt,
     end))
 
--- this looks easier
-theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℤ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
+lemma list.modify_to_list.remove.modify (A B : list ℤ) (d : ℤ): 
+Π (h : list.modify A B d), Π (m : ℕ), m ≠ h.n → m < A.length 
+→ list.modify (A.remove_nth m) (B.remove_nth m) d :=
 begin
-  cases h, have P : length(remove_nth l1 h_n) = length(remove_nth l2 h_n), rw h_heq, 
-  rw length_remove_nth  at P, rw length_remove_nth  at P,  have Q : ¬ h_n < 0, simp,
-  cases l1, dsimp at h_ha, exfalso, finish, cases l2, dsimp at h_hb,
-  exfalso, finish, finish, exact h_hb, exact h_ha,
-  end
+intros h m hm m_lt, 
+have H : length A = length B, exact eq_size_of_modify_list A B d h,
+cases h, split,
+sorry,
+sorry,
+-- should do cases h_n somewhere
+exact (h_n-1),
+rw length_remove_nth,
+rw ← nat.pred_eq_sub_one h_n,
+rw ← nat.pred_eq_sub_one (length A),
+apply nat.pred_lt_pred, sorry,
+exact h_ha,
+exact m_lt,
+rw length_remove_nth,
+rw ← nat.pred_eq_sub_one h_n,
+rw ← nat.pred_eq_sub_one (length B),
+apply nat.pred_lt_pred, sorry,
+exact h_hb,
+rw ← H,
+exact m_lt,
+
+
+
+end
+
+
+
 
 theorem MITM_baby (tf : ℤ) (L1 L2 : list ℤ) (d : ℤ) (h : list.modify L1 L2 d)
   (n : ℕ) (hL1 : L1.length = n) (hL2 : L2.length = n) (i : fin n) :
@@ -192,7 +296,12 @@ begin
     -- Π (h : list.modify A B d), Π (m : ℕ), m ≠ h.n → m < A.length →
     --  list.modify (A - m) (B - m) d 
     -- where A - m is A.remove_nth m 
-    sorry 
+    --have P : list.modify (L1.remove_nth m) (L2.remove_nth m) d, sorry,
+    
+    
+
+    
+    sorry ,
     }
 end
 
