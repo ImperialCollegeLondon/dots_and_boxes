@@ -43,15 +43,112 @@ rw cons_eq_sing_append B hb at *,
 sorry,
 end-/
 
+@[simp] theorem nth_le_reverse' {α : Type*} (l : list α) (i : nat) (h1 h2) :
+  nth_le (reverse l) i h1 = nth_le l (length l - 1 - i) h2 :=
+begin
+  convert nth_le_reverse l _ _ _,
+  rw length_reverse at h1,
+  { generalize hL : length l = L,
+    rw hL at h1,
+    clear hL h2 l α, -- working around bugs in old mathlib
+    omega
+  },
+  { generalize hL : length l = L,
+    rw  length_reverse  at *,
+    rw hL at *,
+    
+    clear hL l α,
+    omega,
+
+
+
+  }
+end
+
+lemma nth_le_zero {α : Type*} [inhabited α] (l : list α) (h : _) :
+  nth_le l 0 h = head l :=
+begin
+  cases l with a m,
+    exfalso, revert h, exact dec_trivial,
+  refl,
+end
+
+lemma nth_le_take {α : Type*} (l : list α) (n m : ℕ) (h1) (h2) :
+nth_le (take m l) n h1 = nth_le l n h2 :=
+begin
+  rw length_take at h1,
+  rename h1 h3,
+  rw lt_min_iff at h3,
+  cases h3 with H1 H2,
+  revert m n,
+  induction l with k hk IH,
+  { intros, exfalso, rw length at H2,
+    cases H2},
+  intros,
+  cases m with m',
+  { simp only [take_zero],
+      cases H1},
+  { simp only [take],
+    cases n with n',
+      refl,
+    rw nth_le,
+    rw nth_le,
+    apply IH,
+      apply nat.lt_of_succ_lt_succ, assumption,
+    apply nat.lt_of_succ_lt_succ, assumption,
+  }
+end
+
 -- should probably name it nth_le_eq_head_reverse_take
 lemma nth_le_rewrite {A : list ℤ} {n : ℕ } (h : n < length A):
 nth_le A n h = head (reverse (take (n + 1) A)):=
 begin
-sorry,
+  have H1 : 0 < length (reverse (take (n + 1) A)),
+   { rw length_reverse,
+     rw length_take,
+     -- we did this somewhere else
+     apply lt_min,
+       linarith,
+     refine lt_of_le_of_lt _ h,
+     linarith,
+},
+  have H : head (reverse (take (n + 1) A)) = nth_le (reverse (take (n + 1) A)) 0 H1,
+    rw nth_le_zero,
+  rw H, -- now have nth_le (reverse)
+rw nth_le_reverse' _ _ _ _,
+  swap,
+  { rw length_take,
+    rw nat.sub_zero,
+    apply buffer.lt_aux_2,
+    have H : 0 < (n + 1) := by norm_num,
+    apply lt_of_lt_of_le H,
+    apply le_min (le_refl _),
+    linarith },
+  simp only [length_take],
+  rw nth_le_take,
+    swap,
+  { rw nat.sub_zero,
+    have H2 : 0 < min (n + 1) (length A),
+    { apply lt_min,
+      { linarith},
+      apply lt_of_le_of_lt _ h,
+      linarith,
+    },
+    rw nat.sub_lt_right_iff_lt_add,
+    { apply lt_of_le_of_lt _ (nat.lt_succ_self _),
+      apply min_le_right},
+    apply le_min,
+    {linarith},
+    {show 0 < length A,
+     apply lt_of_le_of_lt _ h,
+     linarith}
+  },
+  congr',
+  sorry
 end
 
 
-
+#exit
 
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
