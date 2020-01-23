@@ -12,7 +12,7 @@ structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 (heq : A.remove_nth n = B.remove_nth n)
 (bound : abs (A.nth_le n ha - B.nth_le n hb) ≤ d)
 
-lemma cons_eq_sing_append {b : list ℤ} {a : ℤ}:
+lemma cons_eq_sing_append {b : list ℤ} (a : ℤ):
 (a::b) = [a] ++ b :=
 begin 
 refl,
@@ -98,7 +98,7 @@ begin
     apply nat.lt_of_succ_lt_succ, assumption,
   }
 end
-/-
+
 -- should probably name it nth_le_eq_head_reverse_take
 lemma nth_le_rewrite {A : list ℤ} {n : ℕ } (h : n < length A):
 nth_le A n h = head (reverse (take (n + 1) A)):=
@@ -153,32 +153,214 @@ rw nth_le_reverse' _ _ _ _,
 
 end
 
+lemma drop_zero {L : list ℤ}: drop 0 L = L := begin refl, end
+
+lemma take_lemma_base_case {A B : list ℤ} {x: ℕ } :
+take (nat.succ x) A = take (nat.succ x) B → take x A = take x B :=
+begin 
+revert x, revert B,
+induction A with a An,
+intro B, intro x,
+cases B with b Bn,
+rw take_nil,
+rw take_nil,
+simp,
+
+intro H,
+exfalso,
+rw take_nil at H,
+rw take_cons at H,
+simp at H,
+exact H,
+intro B, intro x,
+cases B with b Bn,
+intro H,
+exfalso,
+rw take_nil at H,
+rw take_cons at H,
+simp at H,
+exact H,
+cases x,
+intro H,
+rw take_zero, rw take_zero,
+intro H,
+rw take_cons,
+rw take_cons,
+rw take_cons at H,
+rw take_cons at H,
+rw cons_eq_sing_append at H,
+
+rw cons_eq_sing_append b at H,
+
+have H_left : [a] = [b] , rw append_inj_right H, 
+simp,
+have H_right : take (nat.succ x) An = take (nat.succ x) Bn,
+rw append_inj_left H, simp,
+
+rw cons_eq_sing_append,
+rw cons_eq_sing_append b,
+rw H_left,
+rw append_left_inj [b],
+exact A_ih H_right,
 
 
-
+end
 
 
 lemma take_lemma {A B : list ℤ} {x y : ℕ } (h : y ≤  x):
 take x A = take x B → take y A = take y B :=
 begin
-
+revert A, revert B,
 have P : ∃ (n:ℕ), x = y + n, exact le_iff_exists_add.mp h,
 cases P with n Pn, 
-rw Pn ,
+have Py : y = x - n,
+rw Pn, rw nat.add_sub_cancel,
+rw Py,
+revert x, revert y, 
 induction n with d hd,
 repeat {rw nat.add_zero},
 simp,
-intro H,
-repeat {rw nat.add_succ at H}, 
+intros y x P Px Py B A H,
+
+
 cases A with a An,
 cases B with b Bn,
 refl,
 cases y,
-rw take_nil,
+rw take_nil, rw ← Py,
+rw take_zero, rw ← Py,
+exfalso,
+rw take_nil at H, rw Px at H,
+
+rw take_cons at H,
+simp at H,
+exact H,
+cases B with b Bn,
+cases y,
+rw take_nil, rw ← Py,
+rw take_zero,
+exfalso,
+rw take_nil at H, rw Px at H,
+rw take_cons at H,
+simp at H,
+exact H,
+cases y, rw ← Py, 
+rw take_zero,
+rw take_zero,
+rw ← Py, 
+rw take_cons,
+rw take_cons,
+rw Px at H,
+rw take_cons at H,
+rw take_cons at H,
+
+rw cons_eq_sing_append at H,
+
+rw cons_eq_sing_append b at H,
+
+have H_left : [a] = [b] , rw append_inj_right H, 
+simp,
+have H_right : take (nat.succ y + d) An = take (nat.succ y + d) Bn,
+rw append_inj_left H, simp,
+
+rw cons_eq_sing_append,
+rw cons_eq_sing_append b,
+rw H_left,
+rw append_left_inj [b],
+rw nat.succ_add at H_right,
+have H_new : take (y + d) An = take (y + d) Bn,
+exact take_lemma_base_case  H_right,
+clear Px Py P H H_left H_right,
+have triv1 : y ≤ y + d, simp,
+have triv2 : y + d = y + d, refl,
+have triv3 : y = y + d - d, simp,
+have Proof : take (y + d - d) An = take (y + d - d) Bn,
+exact hd triv1 triv2 triv3 H_new,
+simp at Proof,
+exact Proof, 
+
+end
+
+lemma drop_lemma {A B : list ℤ} {x y : ℕ } (h : x ≤ y):
+drop x A = drop x B → drop y A = drop y B :=
+begin
+revert A, revert B,
+have P : ∃ (n:ℕ), y = x + n, exact le_iff_exists_add.mp h,
+cases P with n Pn, 
+have Py : x = y - n,
+rw Pn, rw nat.add_sub_cancel,
+rw Py,
+revert y, revert x, 
+induction n with d hd,
+repeat {rw nat.add_zero},
+simp,
+intros x y P Py Px B A H,
+
+
+cases A with a An,
+cases B with b Bn,
+refl,
+cases y,
+rw drop_nil, 
+rw drop_zero,
+
+exfalso,
+rw drop_nil at H, 
+simp at H,
+exact H,
+
+
+sorry,
+/-
+rw drop_nil at H,
+rw drop_zero,
+exfalso,
+rw take_nil at H, rw Px at H,
+rw take_cons at H,
+simp at H,
+exact H,
+cases x, rw ← Px, 
+rw drop_zero,
+rw drop_zero,
+rw ← Px, 
+rw take_cons,
+rw take_cons,
+rw Px at H,
+rw take_cons at H,
+rw take_cons at H,
+
+rw cons_eq_sing_append at H,
+
+rw cons_eq_sing_append b at H,
+
+have H_left : [a] = [b] , rw append_inj_right H, 
+simp,
+have H_right : take (nat.succ y + d) An = take (nat.succ y + d) Bn,
+rw append_inj_left H, simp,
+
+rw cons_eq_sing_append,
+rw cons_eq_sing_append b,
+rw H_left,
+rw append_left_inj [b],
+rw nat.succ_add at H_right,
+have H_new : take (y + d) An = take (y + d) Bn,
+exact take_lemma_base_case  H_right,
+clear Px Py P H H_left H_right,
+have triv1 : y ≤ y + d, simp,
+have triv2 : y + d = y + d, refl,
+have triv3 : y = y + d - d, simp,
+have Proof : take (y + d - d) An = take (y + d - d) Bn,
+exact hd triv1 triv2 triv3 H_new,
+simp at Proof,
+exact Proof, -/
 sorry,
 
+end
 
-
+lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h: 1 ≤ m):
+head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
+begin
+sorry,
 end
 
 
@@ -196,6 +378,12 @@ begin
   have h_eq_right : tail (drop h_n A) = tail (drop h_n B), exact append_inj_left' h_heq p,
   
   rw nth_le_rewrite, rw nth_le_rewrite, 
+
+  have m_cases : (m+1) ≤ h_n ∨ (m+1) > h_n , exact le_or_lt (m + 1) h_n,
+  cases m_cases, 
+  rw take_lemma m_cases h_eq_left,
+  
+ sorry,
 /-
   have H1A : 0 < length (reverse (take (m + 1) A)),
    { rw length_reverse,
@@ -248,7 +436,9 @@ begin
 
   
 end
--/
+
+#exit
+
 def list.modify.symm (A B : list ℤ) (d : ℤ) 
 (m : list.modify A B d) : list.modify B A d :=
 { n := m.n,
