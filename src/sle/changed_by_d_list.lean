@@ -38,7 +38,7 @@ dsimp at *, exact false.elim ((nat.not_lt_zero x) ha1),
 simp only [cons_eq_sing_append B hb],
 rw cons_eq_sing_append B hb at *, 
 --rw nth_le_append_right hb ha1 , --dsimp at *,   
---shon wieder diese Problem 
+--schon wieder dieses Problem 
 
 sorry,
 end-/
@@ -98,7 +98,7 @@ begin
     apply nat.lt_of_succ_lt_succ, assumption,
   }
 end
-
+/-
 -- should probably name it nth_le_eq_head_reverse_take
 lemma nth_le_rewrite {A : list ℤ} {n : ℕ } (h : n < length A):
 nth_le A n h = head (reverse (take (n + 1) A)):=
@@ -144,11 +144,42 @@ rw nth_le_reverse' _ _ _ _,
      linarith}
   },
   congr',
-  sorry
+  rw nat.sub_zero,
+  have H3 : n + 1 ≤ length A,
+  {linarith},
+  rw min_eq_left H3,
+  clear h H H1 H3 ,
+  omega,
+
 end
 
 
-#exit
+
+
+
+
+lemma take_lemma {A B : list ℤ} {x y : ℕ } (h : y ≤  x):
+take x A = take x B → take y A = take y B :=
+begin
+
+have P : ∃ (n:ℕ), x = y + n, exact le_iff_exists_add.mp h,
+cases P with n Pn, 
+rw Pn ,
+induction n with d hd,
+repeat {rw nat.add_zero},
+simp,
+intro H,
+repeat {rw nat.add_succ at H}, 
+cases A with a An,
+cases B with b Bn,
+refl,
+cases y,
+rw take_nil,
+sorry,
+
+
+
+end
 
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
@@ -165,25 +196,59 @@ begin
   have h_eq_right : tail (drop h_n A) = tail (drop h_n B), exact append_inj_left' h_heq p,
   
   rw nth_le_rewrite, rw nth_le_rewrite, 
+/-
+  have H1A : 0 < length (reverse (take (m + 1) A)),
+   { rw length_reverse,
+     rw length_take,
+     -- we did this somewhere else
+     apply lt_min,
+       linarith,
+     refine lt_of_le_of_lt _ hmA,
+     linarith,
+},
 
-  sorry,
-  /-
+  have H2A : head (reverse (take (m + 1) A)) = nth_le (reverse (take (m + 1) A)) 0 H1A,
+    rw nth_le_zero,
+  rw H2A, -- now have nth_le (reverse)
+
+  have H1B : 0 < length (reverse (take (m + 1) B)),
+  { rw length_reverse,
+   rw length_take,
+    -- we did this somewhere else
+   apply lt_min,
+   linarith,
+   refine lt_of_le_of_lt _ hmB,
+   linarith,
+},
+
+  have H2B : head (reverse (take (m + 1) B)) = nth_le (reverse (take (m + 1) B)) 0 H1B,
+    rw nth_le_zero,
+  rw H2B, -- now have nth_le (reverse)
+
+  rw nth_le_reverse' _ _ _ _,
+  rw nth_le_reverse' _ _ _ _,
+  
+
+  
+  
   induction A with a An, 
-  exact false.elim ((nat.not_lt_zero m) hmA), 
+  exact false.elim ((nat.not_lt_zero h_n) h_ha), 
   dsimp at *, rw nat.lt_succ_iff at hmA , 
   have Case_h : m = length An ∨ m < length An, exact eq_or_lt_of_le hmA,
   cases Case_h,sorry, have trivial_lemma : (a::An) = [a] ++ An, refl,
   simp only [trivial_lemma],
-  cases m, rw nth_le_append, {rw nth_le_singleton _, sorry}, simp, 
+  cases m,
+  rw nth_le_append, {rw nth_le_singleton _, rw nth_le_zero,
+  sorry}, simp, 
   rw nth_le_append_right , {sorry}, dsimp, show 0 + 1 ≤ nat.succ m,
-  apply nat.succ_le_succ, exact zero_le m, 
-  -/
+  apply nat.succ_le_succ, exact zero_le n, list.drop
+  -/ 
 
   refl,refl,
 
   
 end
-
+-/
 def list.modify.symm (A B : list ℤ) (d : ℤ) 
 (m : list.modify A B d) : list.modify B A d :=
 { n := m.n,
