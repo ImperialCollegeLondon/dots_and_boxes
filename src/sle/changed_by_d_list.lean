@@ -274,11 +274,19 @@ clear Px Py P H H_left H_right,
 have triv1 : y ≤ y + d, simp,
 have triv2 : y + d = y + d, refl,
 have triv3 : y = y + d - d, simp,
-have Proof : take (y + d - d) An = take (y + d - d) Bn,
+rw triv3,
 exact hd triv1 triv2 triv3 H_new,
-simp at Proof,
-exact Proof, 
 
+end
+
+lemma drop_lemma_base_case {A B : list ℤ} {x: ℕ } :
+drop x A = drop x B → drop (nat.succ x) A = drop (nat.succ x) B :=
+begin 
+intro H,
+rw nat.succ_eq_add_one, rw add_comm,
+rw drop_add, 
+rw H,
+rw drop_drop,
 end
 
 lemma drop_lemma {A B : list ℤ} {x y : ℕ } (h : x ≤ y):
@@ -295,73 +303,52 @@ induction n with d hd,
 repeat {rw nat.add_zero},
 simp,
 intros x y P Py Px B A H,
+rw nat.succ_eq_add_one at Py, rw Py,
+rw ← add_assoc,
+rw drop_add, rw drop_add (x+d) 1 B,
 
 
-cases A with a An,
-cases B with b Bn,
-refl,
-cases y,
-rw drop_nil, 
-rw drop_zero,
+rw ← Px at H,
+have H_new : drop (nat.succ x) A = drop (nat.succ x) B,
+exact drop_lemma_base_case H,
+rw nat.succ_eq_add_one at H_new,
+rw drop_add at H_new, rw drop_add x 1 B at H_new,
+have triv1 : x ≤ x + d, simp,
+have triv2 : x + d = x + d, refl,
+have triv3 : x = x + d - d, simp,
+rw triv3 at H_new,
 
-exfalso,
-rw drop_nil at H, 
-simp at H,
-exact H,
-
-
-sorry,
-/-
-rw drop_nil at H,
-rw drop_zero,
-exfalso,
-rw take_nil at H, rw Px at H,
-rw take_cons at H,
-simp at H,
-exact H,
-cases x, rw ← Px, 
-rw drop_zero,
-rw drop_zero,
-rw ← Px, 
-rw take_cons,
-rw take_cons,
-rw Px at H,
-rw take_cons at H,
-rw take_cons at H,
-
-rw cons_eq_sing_append at H,
-
-rw cons_eq_sing_append b at H,
-
-have H_left : [a] = [b] , rw append_inj_right H, 
-simp,
-have H_right : take (nat.succ y + d) An = take (nat.succ y + d) Bn,
-rw append_inj_left H, simp,
-
-rw cons_eq_sing_append,
-rw cons_eq_sing_append b,
-rw H_left,
-rw append_left_inj [b],
-rw nat.succ_add at H_right,
-have H_new : take (y + d) An = take (y + d) Bn,
-exact take_lemma_base_case  H_right,
-clear Px Py P H H_left H_right,
-have triv1 : y ≤ y + d, simp,
-have triv2 : y + d = y + d, refl,
-have triv3 : y = y + d - d, simp,
-have Proof : take (y + d - d) An = take (y + d - d) Bn,
 exact hd triv1 triv2 triv3 H_new,
-simp at Proof,
-exact Proof, -/
-sorry,
 
 end
 
-lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h: 1 ≤ m):
+
+lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
 head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
 begin
+
 sorry,
 end
+
+#exit
+
+lemma tail_eq_drop_one {A:list ℤ} {m : ℕ} :
+tail A = drop 1 A :=
+begin
+cases A,
+refl,
+refl,
+end 
+
+
+lemma tail_drop {A:list ℤ} {m : ℕ} :
+tail (drop m A) = drop (nat.succ m) A :=
+begin
+rw tail_eq_drop_one,
+rw drop_drop, 
+rw add_comm,
+exact m,
+end 
 
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
@@ -379,65 +366,44 @@ begin
   
   rw nth_le_rewrite, rw nth_le_rewrite, 
 
-  have m_cases : (m+1) ≤ h_n ∨ (m+1) > h_n , exact le_or_lt (m + 1) h_n,
+  have m_cases : (m+1) ≤ h_n ∨ h_n < (m+1) , exact le_or_lt (m + 1) h_n,
   cases m_cases, 
   rw take_lemma m_cases h_eq_left,
-  
- sorry,
-/-
-  have H1A : 0 < length (reverse (take (m + 1) A)),
-   { rw length_reverse,
-     rw length_take,
-     -- we did this somewhere else
-     apply lt_min,
-       linarith,
-     refine lt_of_le_of_lt _ hmA,
-     linarith,
-},
 
-  have H2A : head (reverse (take (m + 1) A)) = nth_le (reverse (take (m + 1) A)) 0 H1A,
-    rw nth_le_zero,
-  rw H2A, -- now have nth_le (reverse)
-
-  have H1B : 0 < length (reverse (take (m + 1) B)),
-  { rw length_reverse,
-   rw length_take,
-    -- we did this somewhere else
-   apply lt_min,
-   linarith,
-   refine lt_of_le_of_lt _ hmB,
-   linarith,
-},
-
-  have H2B : head (reverse (take (m + 1) B)) = nth_le (reverse (take (m + 1) B)) 0 H1B,
-    rw nth_le_zero,
-  rw H2B, -- now have nth_le (reverse)
-
-  rw nth_le_reverse' _ _ _ _,
-  rw nth_le_reverse' _ _ _ _,
-  
-
-  
-  
-  induction A with a An, 
-  exact false.elim ((nat.not_lt_zero h_n) h_ha), 
-  dsimp at *, rw nat.lt_succ_iff at hmA , 
-  have Case_h : m = length An ∨ m < length An, exact eq_or_lt_of_le hmA,
-  cases Case_h,sorry, have trivial_lemma : (a::An) = [a] ++ An, refl,
-  simp only [trivial_lemma],
+  rw nat.lt_iff_add_one_le at hmA, simp at hmn,
+  have h1 : 1 ≤ m,
   cases m,
-  rw nth_le_append, {rw nth_le_singleton _, rw nth_le_zero,
-  sorry}, simp, 
-  rw nth_le_append_right , {sorry}, dsimp, show 0 + 1 ≤ nat.succ m,
-  apply nat.succ_le_succ, exact zero_le n, list.drop
-  -/ 
+  exfalso,
+  have hn_0 : h_n = 0, rw nat.lt_add_one_iff at m_cases,
+  exact nat.eq_zero_of_le_zero m_cases,
+  exact false.elim (hmn hn_0),
+  exact dec_trivial,
+  rw take_drop_head_eq h1 hmA,
+  clear hmB,
+  have hmB: m + 1 ≤ length B, rw ←  H, exact hmA,
+  rw take_drop_head_eq h1 hmB,
+  have P : tail (drop (m - 1) A) = tail (drop (m - 1) B),
+  {
+   rw tail_drop,
+   rw tail_drop,
+   rw tail_drop at h_eq_right,
+   rw tail_drop at h_eq_right,
+   have h2 : nat.succ h_n ≤ nat.succ (m-1),
+   rw nat.succ_le_succ_iff,
+   rw nat.lt_add_one_iff at m_cases,
+   apply nat.le_pred_of_lt,
+   exact lt_of_le_of_ne' m_cases hmn, 
+
+   exact drop_lemma h2 h_eq_right,
+  },
+  rw P,
 
   refl,refl,
 
   
 end
 
-#exit
+
 
 def list.modify.symm (A B : list ℤ) (d : ℤ) 
 (m : list.modify A B d) : list.modify B A d :=
