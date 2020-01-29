@@ -100,8 +100,8 @@ begin
 end
 
 -- should probably name it nth_le_eq_head_reverse_take
-lemma nth_le_rewrite {A : list ℤ} {n : ℕ } (h : n < length A):
-nth_le A n h = head (reverse (take (n + 1) A)):=
+lemma head_reverse_take {A : list ℤ} {n : ℕ } (h : n < length A):
+ head (reverse (take (n + 1) A)) = nth_le A n h:=
 begin
   have H1 : 0 < length (reverse (take (n + 1) A)),
    { rw length_reverse,
@@ -153,7 +153,7 @@ rw nth_le_reverse' _ _ _ _,
 
 end
 
-lemma drop_zero {L : list ℤ}: drop 0 L = L := begin refl, end
+lemma drop_zero {α : Type*} {L : list α }: drop 0 L = L := begin refl, end
 
 lemma take_lemma_base_case {A B : list ℤ} {x: ℕ } :
 take (nat.succ x) A = take (nat.succ x) B → take x A = take x B :=
@@ -325,35 +325,48 @@ end
 
 
 
-
-
-lemma tail_eq_drop_one {A:list ℤ} {m : ℕ} :
-tail A = drop 1 A :=
-begin
-cases A,
-refl,
-refl,
-end 
-
-
 lemma tail_drop {A:list ℤ} {m : ℕ} :
 tail (drop m A) = drop (nat.succ m) A :=
 begin
-rw tail_eq_drop_one,
+rw ← drop_one,
 rw drop_drop, 
 rw add_comm,
-exact m,
 end 
+
+lemma head_drop (α : Type*) [inhabited α] (L : list α) (m : ℕ) (hm : m < L.length):
+  head (drop m L) = nth_le L m hm :=
+begin
+  revert L,
+  induction m with d hd,
+  { -- base case m=0
+    intros L hL,
+    rw drop_zero,
+    rw nth_le_zero,
+  },
+  intros L hm,
+  induction L with a M H,
+    cases hm,
+  dsimp,
+  apply hd,
+end
 
 lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
 head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
 begin
-rw tail_drop,
-
-sorry,
+  rw tail_drop,
+  rw head_reverse_take h2,
+  rw [nat.succ_eq_add_one, nat.sub_add_cancel h1],
+  rw head_drop,
 end
 
-#exit
+
+
+lemma take_drop_head_eq' {A:list ℤ} {d : ℕ} (h2: d + 2 ≤ length A):
+head (reverse (take (d+2) A)) = head (tail (drop d A)):=
+by rw [tail_drop, head_reverse_take h2, head_drop]
+
+
+
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
   (h : list.modify A B d) (m : ℕ) (hmA : m < A.length) (hmB : m < B.length)
@@ -368,7 +381,7 @@ begin
   have h_eq_left : take h_n A = take h_n B , exact append_inj_right' h_heq p,
   have h_eq_right : tail (drop h_n A) = tail (drop h_n B), exact append_inj_left' h_heq p,
   
-  rw nth_le_rewrite, rw nth_le_rewrite, 
+  rw ← head_reverse_take, rw ← head_reverse_take, 
 
   have m_cases : (m+1) ≤ h_n ∨ h_n < (m+1) , exact le_or_lt (m + 1) h_n,
   cases m_cases, 
@@ -630,7 +643,6 @@ end
   
 
 
-#exit
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
     ((list.of_fn $ λ (i : fin G.C.length),
@@ -671,7 +683,7 @@ end
 
 
 
-#exit 
+
 
 -- this is the big challenge
 theorem MITM (G1 G2 : game) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
