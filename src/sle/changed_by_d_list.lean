@@ -323,14 +323,9 @@ exact hd triv1 triv2 triv3 H_new,
 end
 
 
-lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
-head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
-begin
 
-sorry,
-end
 
-#exit
+
 
 lemma tail_eq_drop_one {A:list ℤ} {m : ℕ} :
 tail A = drop 1 A :=
@@ -350,6 +345,15 @@ rw add_comm,
 exact m,
 end 
 
+lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
+head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
+begin
+rw tail_drop,
+
+sorry,
+end
+
+#exit
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
   (h : list.modify A B d) (m : ℕ) (hmA : m < A.length) (hmB : m < B.length)
