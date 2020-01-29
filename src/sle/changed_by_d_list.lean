@@ -569,6 +569,10 @@ begin
     exact abs_min_sub_min hmn h}
 end
 
+lemma list.min'_change (L M : list ℤ) (hLM : L.length = M.length) (d : ℤ)
+(hdist : ∀ (i : ℕ) (hiL : i < L.length) (hiM : i < M.length), abs (L.nth_le i hiL - M.nth_le i hiM) ≤ d) :
+  abs (L.min' - M.min') ≤ d := sorry
+
 /-- Value of all-chain or all-loop game L given that we're playing in i'th component -/
 definition list.value_i (tf : ℤ) :
   ∀ (n : ℕ) (L : list ℤ) (i : fin n) (hL : L.length = n), ℤ
@@ -620,7 +624,7 @@ theorem MITM_baby (tf : ℤ) (L1 L2 : list ℤ) (d : ℤ) (h : list.modify L1 L2
   abs (list.value_i tf n L1 i hL1 - list.value_i tf n L2 i hL2) ≤ d :=
 begin
   revert L1 L2,
-  induction n with d hd,
+  induction n with e he,
     cases i, cases i_is_lt,
   intros L1 L2 h hL1 hL2,
   unfold list.value_i,
@@ -638,15 +642,10 @@ begin
     rw list.modify_same h i.val _ (begin rw hL2, exact i.is_lt end) hin,
     apply list.aux_fun_L2,
     -- apply "lists differ by at most d -> min differs by at most d"
-    -- you will need a function
-    -- Π (h : list.modify A B d), Π (m : ℕ), m ≠ h.n → m < A.length →
-    --  list.modify (A - m) (B - m) d 
-    -- where A - m is A.remove_nth m 
-    --have P : list.modify (L1.remove_nth m) (L2.remove_nth m) d, sorry,
-    
-    
-
-    
+    apply list.min'_change,
+      simp only [list.length_of_fn],
+    intros,
+    -- now deduce from he somehow!
     sorry ,
     }
 end
