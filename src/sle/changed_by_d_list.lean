@@ -100,8 +100,8 @@ begin
 end
 
 -- should probably name it nth_le_eq_head_reverse_take
-lemma nth_le_rewrite {A : list ℤ} {n : ℕ } (h : n < length A):
-nth_le A n h = head (reverse (take (n + 1) A)):=
+lemma head_reverse_take {A : list ℤ} {n : ℕ } (h : n < length A):
+  head (reverse (take (n + 1) A)) = nth_le A n h :=
 begin
   have H1 : 0 < length (reverse (take (n + 1) A)),
    { rw length_reverse,
@@ -153,7 +153,7 @@ rw nth_le_reverse' _ _ _ _,
 
 end
 
-lemma drop_zero {L : list ℤ}: drop 0 L = L := begin refl, end
+lemma drop_zero {α : Type*} {L : list α}: drop 0 L = L := begin refl, end
 
 lemma take_lemma_base_case {A B : list ℤ} {x: ℕ } :
 take (nat.succ x) A = take (nat.succ x) B → take x A = take x B :=
@@ -345,15 +345,40 @@ rw add_comm,
 exact m,
 end 
 
+-- lemma head_reverse (α : Type*) [inhabited α] (L : list α) :
+--   head (reverse L) = ilast L :=
+-- begin
+--   sorry -- may not need this!
+-- end
+
+lemma head_drop (α : Type*) [inhabited α] (L : list α) (m : ℕ) (hm : m < L.length):
+  head (drop m L) = nth_le L m hm :=
+begin
+  revert L,
+  induction m with d hd,
+  { -- base case m=0
+    intros L hL,
+    rw drop_zero,
+    rw nth_le_zero,
+  },
+  intros L hm,
+  induction L with a M H,
+    cases hm,
+  apply hd,
+end
+
 lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
 head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
 begin
-rw tail_drop,
-
-sorry,
+  rw tail_drop,
+  rw head_reverse_take h2,
+  rw [nat.succ_eq_add_one, nat.sub_add_cancel h1],
+  rw head_drop,
 end
 
-#exit
+lemma take_drop_head_eq' {A:list ℤ} {d : ℕ} (h2: d + 2 ≤ length A):
+head (reverse (take (d+2) A)) = head (tail (drop d A)):=
+by rw [tail_drop, head_reverse_take h2, head_drop]
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
   (h : list.modify A B d) (m : ℕ) (hmA : m < A.length) (hmB : m < B.length)
@@ -368,7 +393,7 @@ begin
   have h_eq_left : take h_n A = take h_n B , exact append_inj_right' h_heq p,
   have h_eq_right : tail (drop h_n A) = tail (drop h_n B), exact append_inj_left' h_heq p,
   
-  rw nth_le_rewrite, rw nth_le_rewrite, 
+  rw ←head_reverse_take, rw ←head_reverse_take, 
 
   have m_cases : (m+1) ≤ h_n ∨ h_n < (m+1) , exact le_or_lt (m + 1) h_n,
   cases m_cases, 
@@ -472,6 +497,9 @@ C game.zero → (∀ n : ℕ,
   ∀ G : game, C G :=
 λ z ih G, @game.rec_on_size' C (λ H hH, (by rwa eq_zero_of_size_zero hH : C H)) ih (G.size) _ rfl
 
+/-- Let G be all chains or loops. If m is a component of G, and
+  vL = value of game G with m removed, list.aux_fun this is the value of G given
+  that we're playing m -/
 def list.aux_fun (m tf vL : ℤ) := m - tf + abs(tf - vL)
 
 theorem list.aux_fun_L1 {m1 m2 tf vL d : ℤ} (hm : abs (m1 - m2) ≤ d) :
@@ -480,7 +508,7 @@ begin
   unfold list.aux_fun, finish,
 end
 
-theorem list.aux_fun_L2 {m m tf vL1 vL2 d : ℤ} (hm : abs (vL1 - vL2) ≤ d) :
+theorem list.aux_fun_L2 {m tf vL1 vL2 d : ℤ} (hm : abs (vL1 - vL2) ≤ d) :
   abs(list.aux_fun m tf vL1 - list.aux_fun m tf vL2) ≤ d :=
 begin
  unfold list.aux_fun, rw sub_add_eq_sub_sub_swap, 
@@ -548,6 +576,7 @@ begin
     exact abs_min_sub_min hmn h}
 end
 
+/-- Value of all-chain or all-loop game L given that we're playing in i'th component -/
 definition list.value_i (tf : ℤ) :
   ∀ (n : ℕ) (L : list ℤ) (i : fin n) (hL : L.length = n), ℤ
 | (0) L i h := begin exfalso,  exact fin.elim0 i, end -- i gives a contradiction
@@ -558,6 +587,9 @@ definition list.value_i (tf : ℤ) :
       rw h, exact i.is_lt,
     end))
 
+#eval list.value_i 4 3 [4,4,10] ⟨1, by norm_num⟩ sorry 
+
+#check list.modify
 lemma list.modify_to_list.remove.modify (A B : list ℤ) (d : ℤ): 
 Π (h : list.modify A B d), Π (m : ℕ), m ≠ h.n → m < A.length 
 → list.modify (A.remove_nth m) (B.remove_nth m) d :=
@@ -589,7 +621,7 @@ end
 
 
 
-
+/-- Man in the middle for all-chain or all-loop situations -/
 theorem MITM_baby (tf : ℤ) (L1 L2 : list ℤ) (d : ℤ) (h : list.modify L1 L2 d)
   (n : ℕ) (hL1 : L1.length = n) (hL2 : L2.length = n) (i : fin n) :
   abs (list.value_i tf n L1 i hL1 - list.value_i tf n L2 i hL2) ≤ d :=
@@ -608,11 +640,10 @@ begin
     convert h.bound,
       exact hin.symm,
       exact hin.symm,
-    },
+  },
   { -- i ≠ place where lists differ
     rw list.modify_same h i.val _ (begin rw hL2, exact i.is_lt end) hin,
     apply list.aux_fun_L2,
-      exact 37, -- note: this might be the right number in all cases
     -- apply "lists differ by at most d -> min differs by at most d"
     -- you will need a function
     -- Π (h : list.modify A B d), Π (m : ℕ), m ≠ h.n → m < A.length →
@@ -630,7 +661,6 @@ end
   
 
 
-#exit
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
     ((list.of_fn $ λ (i : fin G.C.length),
@@ -670,8 +700,6 @@ begin
 end
 
 
-
-#exit 
 
 -- this is the big challenge
 theorem MITM (G1 G2 : game) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
