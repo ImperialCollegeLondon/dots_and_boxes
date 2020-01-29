@@ -325,24 +325,12 @@ end
 
 
 
-
-
-lemma tail_eq_drop_one {A:list ℤ} {m : ℕ} :
-tail A = drop 1 A :=
-begin
-cases A,
-refl,
-refl,
-end 
-
-
 lemma tail_drop {A:list ℤ} {m : ℕ} :
 tail (drop m A) = drop (nat.succ m) A :=
 begin
-rw tail_eq_drop_one,
+rw ← drop_one,
 rw drop_drop, 
 rw add_comm,
-exact m,
 end 
 
 -- lemma head_reverse (α : Type*) [inhabited α] (L : list α) :
@@ -376,9 +364,14 @@ begin
   rw head_drop,
 end
 
+
+
 lemma take_drop_head_eq' {A:list ℤ} {d : ℕ} (h2: d + 2 ≤ length A):
 head (reverse (take (d+2) A)) = head (tail (drop d A)):=
 by rw [tail_drop, head_reverse_take h2, head_drop]
+
+
+
 
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
   (h : list.modify A B d) (m : ℕ) (hmA : m < A.length) (hmB : m < B.length)
@@ -393,7 +386,7 @@ begin
   have h_eq_left : take h_n A = take h_n B , exact append_inj_right' h_heq p,
   have h_eq_right : tail (drop h_n A) = tail (drop h_n B), exact append_inj_left' h_heq p,
   
-  rw ←head_reverse_take, rw ←head_reverse_take, 
+  rw ← head_reverse_take, rw ← head_reverse_take, 
 
   have m_cases : (m+1) ≤ h_n ∨ h_n < (m+1) , exact le_or_lt (m + 1) h_n,
   cases m_cases, 
@@ -698,6 +691,8 @@ begin
   unfold size, rw h_a_1, rw @add_left_cancel_iff _ _ (G2.C).length,  
   exact eq_size_of_modify_list G1.L G2.L d h_a,
 end
+
+
 
 
 
