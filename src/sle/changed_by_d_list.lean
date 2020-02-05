@@ -12,37 +12,36 @@ structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 (heq : A.remove_nth n = B.remove_nth n)
 (bound : abs (A.nth_le n ha - B.nth_le n hb) ≤ d)
 
+/-- (a::b) is the same as [a] ++ b-/
 lemma cons_eq_sing_append {b : list ℤ} (a : ℤ):
 (a::b) = [a] ++ b :=
 begin 
 refl,
 end
 
--- this looks easier
+/--Two lists that are equal except one entrydiffers by at most d have equal length-/
 theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℤ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
 begin
-  cases h, have P : length(remove_nth l1 h_n) = length(remove_nth l2 h_n), rw h_heq, 
-  rw length_remove_nth  at P, rw length_remove_nth  at P,  have Q : ¬ h_n < 0, simp,
-  cases l1, dsimp at h_ha, exfalso, finish, cases l2, dsimp at h_hb,
-  exfalso, finish, finish, exact h_hb, exact h_ha,
+  -- split list.modify condition into its statements
+  cases h, 
+  -- as the lists below are equal by h_heq, their length must be equal
+  have P : length(remove_nth l1 h_n) = length(remove_nth l2 h_n), 
+  rw h_heq, 
+  rw length_remove_nth l1 h_n h_ha at P, 
+  rw length_remove_nth l2 h_n h_hb at P,  
+  --need this for finish to work
+  have Q : ¬ h_n < 0, simp,
+  -- Now  P gives the result by cancelling -1 on both sides, but this
+  -- only works if both lists have length > 0. Hence split into easy cases 
+  -- and let Lean do the rest
+  cases l1, dsimp at h_ha,
+  exfalso, finish,
+  cases l2, dsimp at h_hb,
+  exfalso, finish, 
+  finish, 
   end
 
-/-
---WRONG
-lemma nth_le_rem_nth {A : list ℤ} {n : ℕ } : ∀ (x : ℕ) (h_neq : x ≠ n)
-(ha1: x < length A) (ha2: x < length(remove_nth A n)), 
-(nth_le A x ha1 = nth_le (remove_nth A n) x ha2):=
-begin
-intros x hx ha1 ha2, induction A with hb B,  
-dsimp at *, exact false.elim ((nat.not_lt_zero x) ha1), 
-simp only [cons_eq_sing_append B hb],
-rw cons_eq_sing_append B hb at *, 
---rw nth_le_append_right hb ha1 , --dsimp at *,   
---schon wieder dieses Problem 
-
-sorry,
-end-/
-
+/-- the ith element of the reverted list is the (length l - 1 - i)th element of the list-/
 @[simp] theorem nth_le_reverse' {α : Type*} (l : list α) (i : nat) (h1 h2) :
   nth_le (reverse l) i h1 = nth_le l (length l - 1 - i) h2 :=
 begin
@@ -65,6 +64,7 @@ begin
   }
 end
 
+/--the zeroth element of the list is its head-/
 lemma nth_le_zero {α : Type*} [inhabited α] (l : list α) (h : _) :
   nth_le l 0 h = head l :=
 begin
@@ -73,6 +73,7 @@ begin
   refl,
 end
 
+/--the nth element of the first m elements is the nth element if n < m-/
 lemma nth_le_take {α : Type*} (l : list α) (n m : ℕ) (h1) (h2) :
 nth_le (take m l) n h1 = nth_le l n h2 :=
 begin
@@ -100,6 +101,7 @@ begin
 end
 
 -- should probably name it nth_le_eq_head_reverse_take
+/--If you take the head of the first n+1 elements in reverse order you get the nth element-/
 lemma head_reverse_take {A : list ℤ} {n : ℕ } (h : n < length A):
   head (reverse (take (n + 1) A)) = nth_le A n h :=
 begin
@@ -153,8 +155,10 @@ rw nth_le_reverse' _ _ _ _,
 
 end
 
+/-- dropping no elements from a list gives the list-/
 lemma drop_zero {α : Type*} {L : list α}: drop 0 L = L := begin refl, end
 
+/--If the first x+1 elements of two lists are the same, so are the first x-/
 lemma take_lemma_base_case {A B : list ℤ} {x: ℕ } :
 take (nat.succ x) A = take (nat.succ x) B → take x A = take x B :=
 begin 
@@ -206,7 +210,7 @@ exact A_ih H_right,
 
 end
 
-
+/--If the first x elements of two lists are the same, so are the first y if y ≤ x-/
 lemma take_lemma {A B : list ℤ} {x y : ℕ } (h : y ≤  x):
 take x A = take x B → take y A = take y B :=
 begin
@@ -279,6 +283,7 @@ exact hd triv1 triv2 triv3 H_new,
 
 end
 
+/--If dropping the first x elements of two lists gives the same list, so does dropping the first x + 1-/
 lemma drop_lemma_base_case {A B : list ℤ} {x: ℕ } :
 drop x A = drop x B → drop (nat.succ x) A = drop (nat.succ x) B :=
 begin 
@@ -289,6 +294,7 @@ rw H,
 rw drop_drop,
 end
 
+/--If dropping the first x elements of two lists gives the same list, so does dropping the first y if y ≥ x-/
 lemma drop_lemma {A B : list ℤ} {x y : ℕ } (h : x ≤ y):
 drop x A = drop x B → drop y A = drop y B :=
 begin
@@ -569,9 +575,34 @@ begin
     exact abs_min_sub_min hmn h}
 end
 
-lemma list.min'_change (L M : list ℤ) (hLM : L.length = M.length) (d : ℤ)
+
+
+lemma list.min'_change (L M : list ℤ) (hLM : L.length = M.length) (d : ℤ) (hd : 0 ≤ d)
 (hdist : ∀ (i : ℕ) (hiL : i < L.length) (hiM : i < M.length), abs (L.nth_le i hiL - M.nth_le i hiM) ≤ d) :
-  abs (L.min' - M.min') ≤ d := sorry
+  abs (L.min' - M.min') ≤ d := 
+  begin
+  cases M with m Mn,
+  simp at *,
+  rw length_eq_zero at hLM,
+  rw hLM,
+  unfold list.min',
+
+  simp *,
+  have hM : ¬ (m :: Mn) = nil := by simp,
+  have hL : ¬ L = nil, 
+  apply ne_nil_of_length_pos,
+  rw hLM,
+  exact length_pos_of_ne_nil hM,
+
+  
+  unfold list.min',
+  split_ifs,
+  apply list.min_change,
+  exact hLM,
+  exact hdist,
+
+  end
+
 
 /-- Value of all-chain or all-loop game L given that we're playing in i'th component -/
 definition list.value_i (tf : ℤ) :
@@ -612,11 +643,12 @@ exact h_hb,
 rw ← H,
 exact m_lt,
 
-
+ 
 
 end
 
 
+example (a b: ℤ ) : b < a ∨ a < b ∨ a = b:= dec_trivial
 
 /-- Man in the middle for all-chain or all-loop situations -/
 theorem MITM_baby (tf : ℤ) (L1 L2 : list ℤ) (d : ℤ) (h : list.modify L1 L2 d)
@@ -646,11 +678,35 @@ begin
       simp only [list.length_of_fn],
     intros,
     -- now deduce from he somehow!
+    --prove 0 <= d from h using that the asolute value is non-negative
+    cases h, apply le_trans _ h_bound, 
+    show abs (nth_le L1 h_n h_ha - nth_le L2 h_n h_hb) ≥ 0,
+    exact abs_nonneg _,
+
+    intros n HnL HnM,
+    cases h,
+    --need this as argument for he (in he L1 = (remove_nth L1 (i.val))
+    --and L2 = (remove_nth L2 (i.val)))
+    have i_cases : i.val < h_n ∨ h_n < i.val, sorry,
+    have P : list.modify (remove_nth L1 (i.val)) (remove_nth L2 (i.val)) d,
+    --the point at which both lists will differ is h_n-1 if h_n > i.val
+    --and h_n if h_n < i.val
+    cases i_cases with case1 case2,
+    split, sorry, sorry, exact h_n - 1,
+    rw length_remove_nth, rw nat.sub_lt_right_iff_lt_add,
+
+    
+
+    -- prove pL1 : length (remove_nth L1 (i.val)) = e, 
+    -- and hL2 : length (remove_nth L2 (i.val)) = e to use as arguments for he
+
+    --let j := fin e,
+
     sorry ,
     }
 end
 
-  
+ #exit 
 
 
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
