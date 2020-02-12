@@ -650,20 +650,152 @@ end
 
 -/
 
-lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(H : a ≤ length L)(H : b ≤ length L - 1):
-remove_nth (remove_nth L a) b = if a < (b + 1) then remove_nth (remove_nth L (b+1)) a 
-else remove_nth (remove_nth L b) (a-1):=
-begin 
-split_ifs,
-induction L with n Ln,
-sorry,sorry,
---repeat {rw remove_nth_eq_nth_tail, rw modify_nth_tail_eq_take_drop},
---rw append_eq_append_iff,
---rw drop_append,
-
-sorry,
+lemma remove_nth_eq_take_add_drop (a : ℕ) (L : list ℤ) :
+  remove_nth L a = take a L ++ drop (a + 1) L :=
+begin
+  rw remove_nth_eq_nth_tail,
+  rw modify_nth_tail_eq_take_drop,
+  rw tail_drop,
+  refl,
 end
 
+#check @take_append_of_le_length
+lemma take_append_of_length_le {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
+ length l₁ ≤ n →
+  take n (l₁ ++ l₂) = l₁ ++ take (n - l₁.length) l₂ :=
+begin
+  intro h,
+  revert n,
+  induction l₁ with c L H,
+  { intros, 
+    rw nil_append,
+    rw nil_append,
+    refl,
+  },
+  intro n,
+  intro h,
+  cases n with m,
+    cases h, -- kill n = 0 case
+  rw cons_append,
+  rw take_cons,
+  rw cons_append,
+  congr',
+  rw H,
+  { congr' 2,
+    rw length_cons,
+    generalize : length L = d,
+    simp,
+  },
+  rw length_cons at h,
+  revert h,
+  exact nat.pred_le_iff.mpr
+end
+
+lemma take_append {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
+
+  take n (l₁ ++ l₂) = 
+  if ( n ≤ length l₁) then take n l₁ else l₁ ++ take (n - l₁.length) l₂ :=
+begin
+  split_ifs,
+    exact take_append_of_le_length h,
+  apply take_append_of_length_le,
+  linarith,
+end
+
+#check drop_take
+
+lemma drop_append_of_length_le {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
+  length l₁ ≤ n → drop n (l₁ ++ l₂) = drop (n - l₁.length) l₂ :=
+begin
+  revert n,
+  induction l₁ with c L H,
+  { sorry},
+  { sorry}  
+end 
+
+lemma drop_append {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
+  drop n (l₁ ++ l₂) = if n ≤ l₁.length then drop n l₁ ++ l₂ else drop (n - l₁.length) l₂ :=
+begin
+  split_ifs,
+    exact drop_append_of_le_length h,
+  apply drop_append_of_length_le,
+  linarith,
+end
+
+lemma remove_nth_zero {α : Type*} (L : list α) : remove_nth L 0 = tail L :=
+by cases L; refl
+
+lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(Ha : a ≤ length L)(Hb : b + 1 ≤ length L):
+remove_nth (remove_nth L a) b = if a < (b + 1) then remove_nth (remove_nth L (b+1)) a 
+else remove_nth (remove_nth L b) (a-1):=
+begin
+  cases a with a,
+  { rw [if_pos (nat.zero_lt_succ _), remove_nth_zero, remove_nth_zero],
+    clear Ha Hb,
+    revert b,
+    induction L with c L H,
+      intros, refl,
+    intros,
+    refl,
+  },
+  split_ifs,
+  { rw remove_nth_eq_take_add_drop,
+    rw remove_nth_eq_take_add_drop,
+    rw remove_nth_eq_take_add_drop,
+    rw remove_nth_eq_take_add_drop,
+    rw drop_append,
+    split_ifs,
+      rw [length_take, lt_min_iff] at h_1, cases h_1, linarith,
+    clear h_1,
+    rw @take_append _ _ _ (a + 1),
+    split_ifs,
+      swap,
+      { push_neg at h_1,
+        rw [length_take] at h_1,
+        exfalso,
+        rw min_eq_left at h_1,
+          change a + 1 < _ at h,
+          linarith,
+        assumption,
+      },
+    rw take_append,
+    rw drop_append,
+    rw ←drop_take,
+    rw length_take,
+    rw length_take,
+    rw min_eq_left Hb,
+    rw min_eq_left Ha,
+    rw nat.succ_eq_add_one at *,
+    clear h_1,
+    rw if_pos (show a+1+1≤b+1, from h),
+    split_ifs,
+    { rw le_iff_eq_or_lt at h_1,
+      cases h_1,
+        swap, exfalso, linarith,
+      rw ←h_1,
+      rw take_take,
+      rw min_self,
+      rw take_take,
+      rw min_eq_left, swap, simp only [zero_le, le_add_iff_nonneg_right],
+      congr',
+      rw drop_drop,
+      -- need drop n (take n L) = nil.
+      convert (nil_append _).symm using 2,
+        convert drop_all _,
+        rw length_take,
+        rw min_eq_left,
+        assumption,
+      congr' 1,
+      clear Hb Ha, omega,
+    },
+    { 
+      sorry}
+
+  },
+  { sorry},
+end
+
+#exit
 lemma nth_le_remove_nth :
 nth_le (remove_nth L a) b _ = 
 if a ≤  b then nth_le L (b+1) _
