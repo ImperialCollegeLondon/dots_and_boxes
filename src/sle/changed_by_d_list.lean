@@ -331,7 +331,7 @@ end
 
 
 
-lemma tail_drop {A:list ℤ} {m : ℕ} :
+lemma tail_drop (α : Type*) {A:list α} {m : ℕ} :
 tail (drop m A) = drop (nat.succ m) A :=
 begin
 rw ← drop_one,
@@ -603,7 +603,6 @@ lemma list.min'_change (L M : list ℤ) (hLM : L.length = M.length) (d : ℤ) (h
 
   end
 
-
 /-- Value of all-chain or all-loop game L given that we're playing in i'th component -/
 definition list.value_i (tf : ℤ) :
   ∀ (n : ℕ) (L : list ℤ) (i : fin n) (hL : L.length = n), ℤ
@@ -650,7 +649,7 @@ end
 
 -/
 
-lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(H : a ≤ length L)(H : b ≤ length L - 1):
+lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(H : a ≤ length L)(P : b ≤ length L - 1):
 remove_nth (remove_nth L a) b = if a < (b + 1) then remove_nth (remove_nth L (b+1)) a 
 else remove_nth (remove_nth L b) (a-1):=
 begin 
@@ -664,10 +663,13 @@ sorry,sorry,
 sorry,
 end
 
-lemma nth_le_remove_nth :
-nth_le (remove_nth L a) b _ = 
-if a ≤  b then nth_le L (b+1) _
-else 
+lemma nth_le_remove_nth {a b : ℕ } (L : list ℤ) (h:b < length (remove_nth L a)):
+nth_le (remove_nth L a) b h = 
+if a ≤ b then nth_le L (b+1) {begin sorry, end}
+else nth_le (remove_nth L a) b {begin sorry, end}:=
+begin
+sorry,
+end
 
 
 
