@@ -615,6 +615,7 @@ definition list.value_i (tf : ℤ) :
       rw h, exact i.is_lt,
     end))
 
+/-
 #eval list.value_i 4 3 [4,4,10] ⟨1, by norm_num⟩ sorry 
 
 #check list.modify
@@ -647,8 +648,28 @@ exact m_lt,
 
 end
 
+-/
 
-example (a b: ℤ ) : b < a ∨ a < b ∨ a = b:= dec_trivial
+lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(H : a ≤ length L)(H : b ≤ length L - 1):
+remove_nth (remove_nth L a) b = if a < (b + 1) then remove_nth (remove_nth L (b+1)) a 
+else remove_nth (remove_nth L b) (a-1):=
+begin 
+split_ifs,
+induction L with n Ln,
+sorry,sorry,
+--repeat {rw remove_nth_eq_nth_tail, rw modify_nth_tail_eq_take_drop},
+--rw append_eq_append_iff,
+--rw drop_append,
+
+sorry,
+end
+
+lemma nth_le_remove_nth :
+nth_le (remove_nth L a) b _ = 
+if a ≤  b then nth_le L (b+1) _
+else 
+
+
 
 /-- Man in the middle for all-chain or all-loop situations -/
 theorem MITM_baby (tf : ℤ) (L1 L2 : list ℤ) (d : ℤ) (h : list.modify L1 L2 d)
@@ -687,15 +708,124 @@ begin
     cases h,
     --need this as argument for he (in he L1 = (remove_nth L1 (i.val))
     --and L2 = (remove_nth L2 (i.val)))
-    have i_cases : i.val < h_n ∨ h_n < i.val, sorry,
-    have P : list.modify (remove_nth L1 (i.val)) (remove_nth L2 (i.val)) d,
-    --the point at which both lists will differ is h_n-1 if h_n > i.val
-    --and h_n if h_n < i.val
-    cases i_cases with case1 case2,
-    split, sorry, sorry, exact h_n - 1,
-    rw length_remove_nth, rw nat.sub_lt_right_iff_lt_add,
+    have i_cases : i.val < h_n ∨ i.val = h_n ∨ h_n < i.val, exact lt_trichotomy i.val h_n,
+    have P : list.modify (remove_nth L1 (i.val)) (remove_nth L2 (i.val)) d:=
+    {n:= if i.val < h_n then h_n-1 else h_n,
+     ha:=begin  
+         --cases i_cases,
+         rw list.length_remove_nth,
+         split_ifs,
+         show (h_n - 1) < (length L1 - 1),
+         rw nat.sub_lt_left_iff_lt_add,
+         rw add_comm,
+         rw nat.sub_add_cancel _,
+         exact h_ha,
+         rw hL1,
+         exact dec_trivial,
+         exact nat.one_le_of_lt h,
+         cases i_cases,
+         exact false.elim (h i_cases),
+         cases i_cases,
+         simp at hin,
+         rw eq_comm at i_cases,
+         exact false.elim (hin i_cases),
+         show h_n < (length L1 - 1),
+         rw hL1,
+         have s: i.val ≤ nat.succ e - 1,
+         apply nat.le_pred_of_lt i.is_lt,
+         exact nat.lt_of_lt_of_le i_cases s,
+         rw hL1, exact i.is_lt,
+         end,
+     hb:=begin 
+         rw list.length_remove_nth,
+         split_ifs,
+         show (h_n - 1) < (length L2 - 1),
+         rw nat.sub_lt_left_iff_lt_add,
+         rw add_comm,
+         rw nat.sub_add_cancel _,
+         exact h_hb,
+         rw hL2,
+         exact dec_trivial,
+         exact nat.one_le_of_lt h,
+         cases i_cases,
+         exact false.elim (h i_cases),
+         cases i_cases,
+         simp at hin,
+         rw eq_comm at i_cases,
+         exact false.elim (hin i_cases),
+         show h_n < (length L2 - 1),
+         rw hL2,
+         have s: i.val ≤ nat.succ e - 1,
+         apply nat.le_pred_of_lt i.is_lt,
+         exact nat.lt_of_lt_of_le i_cases s,
+         rw hL2, exact i.is_lt,
+         end,
+     heq:=begin
+          
+          split_ifs,
+          have Q : 1 ≤ h_n,
+          exact nat.one_le_of_lt h,
+          --repeat {rw remove_nth_eq_nth_tail, rw modify_nth_tail_eq_take_drop},
+          rw remove_nth_remove_nth L1,
+          rw remove_nth_remove_nth L2,
+          split_ifs,         
+          rw nat.sub_add_cancel,
+          rw h_heq,
+          exact Q,
+          exfalso,
+          rw nat.sub_add_cancel at h_1,
+          exact false.elim(h_1 h),
+          exact Q,
+          rw hL2,
+          exact nat.le_of_lt i.is_lt,
+          apply nat.le_of_lt,
+          rw nat.sub_lt_sub_right_iff Q,
+          exact h_hb,
+          rw hL1,
+          exact nat.le_of_lt i.is_lt,
+          apply nat.le_of_lt,
+          rw nat.sub_lt_sub_right_iff Q,
+          exact h_ha,
+          --repeat {rw remove_nth_eq_nth_tail, rw modify_nth_tail_eq_take_drop},
+          
+          rw remove_nth_remove_nth L1,
+          rw remove_nth_remove_nth L2,
+          split_ifs,     
+          exfalso,
+          cases i_cases,
+          exact false.elim (h i_cases),
+          cases i_cases,
+          simp at hin,
+          rw eq_comm at hin,
+          exact false.elim (hin i_cases),
+          rw nat.lt_iff_le_not_le at h_1,
+          have h_2 : h_n + 1 ≤ i.val,
+          rw ← nat.succ_eq_add_one h_n,
+          apply nat.succ_le_of_lt,
+          exact i_cases,
+          exact false.elim (h_1.right h_2),    
+          rw h_heq,
+          rw hL2,
+          exact nat.le_of_lt i.is_lt,
+          exact nat.le_pred_of_lt h_hb,
+          rw hL1,
+          exact nat.le_of_lt i.is_lt,
+          exact nat.le_pred_of_lt h_ha,
+          end,
+     bound:=begin 
+            split_ifs,
 
-    
+            sorry,
+            end,
+
+
+
+
+    },
+   
+
+      --the point at which both lists will differ is h_n-1 if h_n > i.val
+    --and h_n if h_n < i.val
 
     -- prove pL1 : length (remove_nth L1 (i.val)) = e, 
     -- and hL2 : length (remove_nth L2 (i.val)) = e to use as arguments for he
@@ -737,7 +867,7 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
 
 
 
--- this looks easier
+
 theorem eq_size_of_modify {G1 G2 : game} {d : ℤ} (h : game.modify G1 G2 d) : G1.size = G2.size :=
 begin
   cases h, 
