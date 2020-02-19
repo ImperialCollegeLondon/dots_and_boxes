@@ -565,6 +565,22 @@ begin
     }
 end
 
+-- proposal : define a game to be 
+/-
+1) a size s (number of lists -- two in our case)
+2) list of the tf's (list of nats of size s)
+3) a function from `fin s` to `list ℕ` or `list ℤ` or whatever
+
+Define game.modify of two games G1 and G2 to be:
+
+1) i : fin s
+2) Proof that the j'th lists are equal if j ≠ i
+3) n : fin (length of i'th list)
+4) proof that i'th lists are equal away from n'th place
+5) Proove that values of n'th place of i'th list differ by at most d.
+
+Note: will now need to redefine game.value :-(
+-/
 
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
@@ -633,9 +649,27 @@ begin
       show G2.size = G1.size,
       rw [p, hs]},
     intros i hiL hiM,
+    dsimp,
     rw [length_append, length_of_fn, length_of_fn] at hiL hiM,
-    dsimp, 
-    sorry
+    by_cases hi : i < length (G2.C),
+    { rw nth_le_append _ _,
+      swap,
+        rw length_of_fn,
+        exact hi,
+      rw nth_le_append _ _,
+      swap,
+      -- need a theorem which eats p2 : game.modify G1 G2 d and
+      -- spits out a proof that length G1.C = length G2.c
+      { sorry      },
+      rw nth_le_of_fn' _ _ hi,
+      rw nth_le_of_fn' _ _ _,
+      swap, sorry, -- need that lengths are equal again
+      -- now we do cases on whether 
+      
+        
+      
+      sorry},
+    { sorry},
   },
 end
 /- todo

@@ -719,3 +719,9 @@ intros h1 h2,
 rw nat.lt_succ_iff at h2,
 exact lt_of_lt_of_le h1 h2,
 end
+
+@[simp] theorem nth_le_of_fn' {α : Type*} {n : ℕ} (f : fin n → α)
+  (i : ℕ) (hi : i < n) :
+  nth_le (of_fn f) i ((length_of_fn f).symm ▸ hi) = f ⟨i, hi⟩ :=
+option.some.inj $ by rw [← nth_le_nth];
+  simp only [list.nth_of_fn, of_fn_nth_val, fin.eta, dif_pos hi]
