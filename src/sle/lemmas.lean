@@ -698,7 +698,7 @@ rw add_comm,
 --not exactly sure why this works here, does not work below
 exact h_1,
 rw add_comm,
-exact (le_of_lt h1),
+exact h2,
 exact nat.le_sub_right_of_add_le p,
 
 rw length_take,
