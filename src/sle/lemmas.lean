@@ -438,6 +438,7 @@ end
 lemma remove_nth_zero {α : Type*} (L : list α) : remove_nth L 0 = tail L :=
 by cases L; refl
 
+/--changing the order of element removel of a list of naturals-/
 lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(Ha : a ≤ length L)(Hb : b + 1 ≤ length L):
 remove_nth (remove_nth L a) b = if a < (b + 1) then remove_nth (remove_nth L (b+1)) a 
 else remove_nth (remove_nth L b) (a-1):=
@@ -610,6 +611,7 @@ begin
 },
 end
 
+/--if two lists are equal, their heads are equal-/
 lemma head_eq_of_list_eq {α : Type*} [inhabited α] {L1 L2 : list α}:
 L1 = L2 → list.head L1 = list.head L2:=
 begin
@@ -617,6 +619,8 @@ intro h,
 rw h,
 end
 
+/--the nth element of a list with an element removed is the bth or (b+1)th 
+element of the full list, depending on which element was removed-/
 lemma nth_le_remove_nth {a b : ℕ } (L : list ℤ) (h:b < length (remove_nth L a)) (h1 h2):
 nth_le (remove_nth L a) b h = 
 if a ≤ b then nth_le L (b+1) h1
