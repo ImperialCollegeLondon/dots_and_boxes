@@ -557,14 +557,13 @@ begin
       rw nat.add_sub_cancel,
       rw hL2,
       exact i.is_lt,
-
-    -- how do I create an object fin e within the proof?
-    rw nth_le_map _,
-    sorry ,
+    rw length_of_fn at HnL HnM,
+    rw nth_le_of_fn _ ⟨n, HnL⟩,
+    rw nth_le_of_fn _ ⟨n, HnM⟩,
+    apply he,
+    exact P,
     }
 end
-
- #exit 
 
 
 def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
