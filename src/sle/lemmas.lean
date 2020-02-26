@@ -13,9 +13,9 @@ begin
     exfalso, revert h, exact dec_trivial,
   refl,
 end
-/-- (a::b) is the same as [a] ++ b-/
-lemma cons_eq_sing_append {b : list ℤ} (a : ℤ):
-(a::b) = [a] ++ b := by refl
+/-- (a::L) is the same as [a] ++ L-/
+lemma cons_eq_sing_append {α : Type*} {L : list α } (a : α ):
+(a::L) = [a] ++ L := by refl
 
 
 
