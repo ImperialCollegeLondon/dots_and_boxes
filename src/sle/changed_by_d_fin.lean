@@ -177,7 +177,6 @@ begin
   refl,
 end
 
-
 lemma size2_zero : (zero 2).size2 = 0 := rfl
 
 lemma eq_zero_of_size2_zero (G : game 2) : G.size2 = 0 → G = zero 2 :=
@@ -638,18 +637,59 @@ Note: will now need to redefine game.value :-(
 -/
 
 /-- Remove i'th element of j'th component of G -/
-def game.remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) : game 2 := sorry 
+def game.remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) : game 2 :=
+{f := λ k, if h : k = j then list.remove_nth (G.f j) i.val else (G.f k)}
 
-#check game.size
 lemma game.size2_remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) :
-  (G.remove j i).size2 = G.size2 - 1 := sorry 
+  (G.remove j i).size2 = G.size2 - 1 :=
+begin
+  fin_cases j,
+  { show _ + _ = _ + _ - 1,
+    unfold game.remove,
+    dsimp,
+    split_ifs,
+    { cases h_1},
+    { rw length_remove_nth _ _ i.is_lt, 
+      show length (G.f 0) - 1 + length (G.f 1) = 
+        length (G.f 0) + length (G.f 1) - 1,
+      have i2 := i.is_lt,
+      change i.val < length (G.f 0) at i2,
+      generalize hm : length (G.f 0) = m,
+      rw hm at i2,
+      cases m with m,
+        cases i2,
+      generalize hm2 : length (G.f 1) = m2,
+      clear i2 i hm hm2 G,
+      omega},
+    { cases h_1},
+    { exfalso, apply h, refl},
+  },
+  { show _ + _ = _ + _ - 1,
+    unfold game.remove,
+    dsimp,
+    split_ifs,
+    { cases h},
+    { cases h},
+    { rw length_remove_nth _ _ i.is_lt,
+      show length (G.f 0) + (length (G.f 1) - 1) = 
+        length (G.f 0) + length (G.f 1) - 1,
+      have i2 := i.is_lt,
+      change i.val < length (G.f 1) at i2,
+      generalize hm : length (G.f 1) = m, rw hm at i2,
+      generalize hm2 : length (G.f 0) = m2,
+      cases m with m,
+        cases i2,
+      clear i2 i hm hm2 G,
+      omega},
+    { exfalso, apply h_1, refl}
+  }
+end
 
 def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min (list.bind [(0 : fin 2), (1 : fin 2)] (λ j, 
   list.of_fn $ λ (i : fin (G.f j).length), 
       (G.f j).nth_le i.val i.is_lt - (2 * j.val + 2) + abs (2 * j.val + 2 - 
       hn (G.remove j i) (by rw [game.size2_remove, hG, nat.add_sub_cancel])) 
-  
   ))
   begin
     intro h,
@@ -661,48 +701,20 @@ def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ
     revert h, exact dec_trivial,
   end
 
-  #exit
-    ((list.of_fn $ λ (i : fin G.C.length),
-    G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
-      unfold size, unfold size at hG, cases G,  rw remove_nth_eq_nth_tail,
-      rw modify_nth_tail_eq_take_drop, show length (take (i.val) G_C ++ tail (drop (i.val) G_C)) + length G_L = n,
-      rw list.length_append, rw length_take, rw length_tail, rw length_drop, 
-      cases i with hi hj, show min hi (length G_C) + (length G_C - hi - 1) + length G_L = n,
-      rw min_eq_left(le_of_lt hj), dsimp at hj, dsimp at hG, generalize hc:length G_C = c, rw hc at *,
-       generalize hl:length G_L = l, rw hl at *,clear hc, clear G_C,clear hl G_L hn ,  omega, 
-       refl, 
-      
-    end)) ++ (list.of_fn $ λ (i : fin G.L.length),
-    G.L.nth_le i.val i.is_lt - 4 + abs (4 - hn {C := G.C, L := G.L.remove_nth i.val} begin
-     unfold size, unfold size at hG, cases G,  rw remove_nth_eq_nth_tail,
-      rw modify_nth_tail_eq_take_drop, show length G_C + length (take (i.val) G_L ++ tail (drop (i.val) G_L)) = n,
-      rw list.length_append, rw length_take, rw length_tail, rw length_drop, 
-      cases i with hi hj, show length G_C + (min hi (length G_L) + (length G_L - hi - 1)) = n, 
-      rw min_eq_left(le_of_lt hj), dsimp at hj, dsimp at hG, generalize hc:length G_C = c, rw hc at *,
-       generalize hl:length G_L = l, rw hl at *,clear hc, clear G_C,clear hl G_L hn ,  omega, refl, 
-    end))) 
-    begin
-      apply ne_nil_of_length_pos, suffices : 0 < length (G.C) + length (G.L),simpa using this, unfold size at hG, rw hG, simp,
-    end.
-
-
-
-
-
 theorem eq_size_of_modify {G1 G2 : game 2} {d : ℤ} (h : game.modify G1 G2 d) : G1.size2 = G2.size2 :=
 begin
-  cases h, 
+  cases h with j hj hjm, 
   unfold size2,
-  cases h_j,
-  cases h_hl,
-  have h_j_eq : h_j_val = 0 ∨ h_j_val = 1,
-  sorry,
-  cases h_j_eq,
-  rw h_hk 1,
-  rw add_right_cancel_iff,
-
-  exact remove_nth_eq_remove_nth_to_length_eq h_hl_n h_hl_ha h_hl_hb h_hl_heq,
-  
+  fin_cases j,
+  { have h0 := eq_size_of_modify_list _ _ _ hjm, -- note: first 3 inputs to eq_size_of_modify_list should be {}
+    change length (G1.f 0) = length (G2.f 0) at h0,
+    have h1 : G1.f 1 = G2.f 1,
+      exact hj ⟨1, dec_trivial⟩ dec_trivial,
+    rw [h0, h1],
+  },
+  {
+    sorry -- same proof!
+  }
 end
 
 
