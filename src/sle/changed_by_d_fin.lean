@@ -1,6 +1,7 @@
 import data.list.basic tactic.linarith
 import tactic.omega tactic.apply
 import sle.lemmas
+import tactic.fin_cases
 
 open list
 
@@ -186,7 +187,12 @@ begin
   cases h with h1 h2,
   rw length_eq_zero at h1 h2,
   cases G,
-  sorry,
+  apply game.ext,
+  intros i hi,
+  set i0 : fin 2 := ⟨i, hi⟩,
+  fin_cases i0; rw h,
+    exact h1,
+    exact h2,
 end
 
 end game
