@@ -113,32 +113,80 @@ def list.modify.symm (A B : list ℤ) (d : ℤ)
   bound := by rw [←neg_sub, abs_neg]; exact m.bound
 }
 
-structure game :=
-(C : list ℤ) (L : list ℤ)
+-- proposal : define a game to be 
+/-
+1) a size s (number of lists -- two in our case)
+2) list of the tf's (list of nats of size s)
+3) a function from `fin s` to `list ℕ` or `list ℤ` or whatever
+
+Define game.modify of two games G1 and G2 to be:
+
+1) i : fin s
+2) Proof that the j'th lists are equal if j ≠ i
+3) n : fin (length of i'th list)
+4) proof that i'th lists are equal away from n'th place
+5) Proove that values of n'th place of i'th list differ by at most d.
+
+Note: will now need to redefine game.value :-(
+
+structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
+(n : ℕ)
+(ha : n < A.length)
+(hb : n < B.length)
+(heq : A.remove_nth n = B.remove_nth n)
+(bound : abs (A.nth_le n ha - B.nth_le n hb) ≤ d)
+
+-/
+/-- abstract game with n types of list as components -/
+structure game (n : ℕ) :=
+(f : fin n → list ℤ)
 
 namespace game
---extensionaliti changes in new mathlib
-@[ext] def ext (G1 G2 : game) : G1 = G2 ↔ G1.C = G2.C ∧ G1.L = G2.L :=
-by cases G1; cases G2; simp
+@[ext] def ext {n : ℕ} (G1 G2 : game n) : (∀ (i : ℕ) (hi : i < n), G1.f ⟨i, hi⟩ = G2.f ⟨i, hi⟩) → G1 = G2 :=
+begin
+  intro h,
+  cases G1, cases G2,
+  rw mk.inj_eq,
+  funext j,
+  cases j with i hi,
+  apply h,
+end
 
 -- for use later, in the MITM proof
-inductive modify (G1 G2 : game) (d : ℤ)
-| modifyc : list.modify G1.C G2.C d → (G1.L = G2.L) → modify
-| modifyl : list.modify G1.L G2.L d → (G1.C = G2.C) → modify
+structure modify {n : ℕ} (G1 G2 : game n) (d : ℤ) :=
+(j : fin n)
+(hk : ∀ i : fin n, i ≠ j → G1.f i = G2.f i)
+(hl : list.modify (G1.f j) (G2.f j) d)
 
-def size (G : game) : ℕ := list.length G.C + list.length G.L
+def zero (n : ℕ): game n:=
+{
+  f := λ (i : fin n), nil
+}
 
-def zero : game := ⟨[], []⟩
+def size2 (G : game 2) : ℕ := 
+length (G.f (0:fin 2)) + length (G.f (1:fin 2)) 
 
-lemma size_zero : zero.size = 0 := rfl
 
-lemma eq_zero_of_size_zero {G : game} : G.size = 0 → G = zero :=
+
+
+
+
+--def size {n : ℕ} (G : game n) : ℕ := 
+--Σ  (i : fin n), (length (G.f i))
+
+
+
+lemma size2_zero : (zero 2).size2 = 0 := rfl
+
+lemma eq_zero_of_size2_zero (G : game 2) : G.size2 = 0 → G = zero 2 :=
 begin
   intro h,
   replace h := nat.eq_zero_of_add_eq_zero h,
+  unfold zero,
   cases h with h1 h2,
   rw length_eq_zero at h1 h2,
-  cases G, cases h1, cases h2, refl,
+  cases G,
+  sorry,
 end
 
 end game
@@ -154,18 +202,18 @@ def list.min {X : Type*} [decidable_linear_order X] :
 def list.min' (L : list ℤ) : ℤ :=
 if h : L = [] then 0 else list.min L h
 
-def game.rec_on_size' (C : game → Sort*) :
-(∀ G : game, G.size = 0 → C G) → (∀ n : ℕ, 
-  (∀ G : game, G.size = n → C G) → (∀ G : game, G.size = n + 1 → C G)) →
-  ∀ m : ℕ, ∀ G : game, G.size = m → C G := λ z ih n, nat.rec z ih n
+def game.rec_on_size2' (C : game 2→ Sort*) :
+(∀ G : game 2, G.size2 = 0 → C G) → (∀ n : ℕ, 
+  (∀ G : game 2, G.size2 = n → C G) → (∀ G : game 2, G.size2 = n + 1 → C G)) →
+  ∀ m : ℕ, ∀ G : game 2, G.size2 = m → C G := λ z ih n, nat.rec z ih n
 
 universe u
 --@[elab_as_eliminator]
-def game.rec_on_size {C : game → Sort u} :
-C game.zero → (∀ n : ℕ, 
-  (∀ G : game, G.size = n → C G) → (∀ G : game, G.size = n + 1 → C G)) →
-  ∀ G : game, C G :=
-λ z ih G, @game.rec_on_size' C (λ H hH, (by rwa eq_zero_of_size_zero hH : C H)) ih (G.size) _ rfl
+def game.rec_on_size2 {C : game 2 → Sort u} :
+C (game.zero 2) → (∀ n : ℕ, 
+  (∀ G : game 2, G.size2 = n → C G) → (∀ G : game 2, G.size2 = n + 1 → C G)) →
+  ∀ G : game 2, C G :=
+λ z ih G, @game.rec_on_size2' C (λ H hH, (by rwa eq_zero_of_size2_zero _ hH : C H)) ih (G.size2) _ rfl
 
 /-- Let G be all chains or loops. If m is a component of G, and
   vL = value of game G with m removed, list.aux_fun this is the value of G given
@@ -582,7 +630,7 @@ Define game.modify of two games G1 and G2 to be:
 Note: will now need to redefine game.value :-(
 -/
 
-def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
+def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min 
     ((list.of_fn $ λ (i : fin G.C.length),
     G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
@@ -611,13 +659,20 @@ def game.value : game → ℤ := @game.rec_on_size (λ G, ℤ) (0 : ℤ) $ λ n 
 
 
 
-theorem eq_size_of_modify {G1 G2 : game} {d : ℤ} (h : game.modify G1 G2 d) : G1.size = G2.size :=
+theorem eq_size_of_modify {G1 G2 : game 2} {d : ℤ} (h : game.modify G1 G2 d) : G1.size2 = G2.size2 :=
 begin
   cases h, 
-  unfold size, rw h_a_1, rw @add_right_cancel_iff _ _ (G2.L).length,  
-  exact eq_size_of_modify_list G1.C G2.C d h_a,
-  unfold size, rw h_a_1, rw @add_left_cancel_iff _ _ (G2.C).length,  
-  exact eq_size_of_modify_list G1.L G2.L d h_a,
+  unfold size2,
+  cases h_j,
+  cases h_hl,
+  have h_j_eq : h_j_val = 0 ∨ h_j_val = 1,
+  sorry,
+  cases h_j_eq,
+  rw h_hk 1,
+  rw add_right_cancel_iff,
+
+  exact remove_nth_eq_remove_nth_to_length_eq h_hl_n h_hl_ha h_hl_hb h_hl_heq,
+  
 end
 
 
@@ -625,23 +680,23 @@ end
 
 
 -- this is the big challenge
-theorem MITM (G1 G2 : game) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
+theorem MITM (G1 G2 : game 2) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
  abs(G1.value - G2.value) ≤ d :=
 begin
   revert G1,
   revert G2,
-  apply @game.rec_on_size (λ G2, ∀ G1, modify G1 G2 d → 
+  apply @game.rec_on_size2 (λ G2, ∀ G1, modify G1 G2 d → 
   abs (game.value G1 - game.value G2) ≤ d),
   -- this might be tricky!
-  { intros G h1, have h3 : G.size = zero.size := eq_size_of_modify h1,
-  rw size_zero at h3, have H := eq_zero_of_size_zero h3, 
+  { intros G h1, have h3 : G.size2 = (zero 2).size2 := eq_size_of_modify h1,
+  rw size2_zero at h3, have H := eq_zero_of_size2_zero _ h3, 
   rw H, show  0 ≤ d, exact h2},
   { intros n H G1 p G2 p2,
     have hs := eq_size_of_modify p2,
     rw p at hs,
     unfold game.value,
-    unfold game.rec_on_size,
-    unfold game.rec_on_size',
+    unfold game.rec_on_size2,
+    unfold game.rec_on_size2',
 --    dsimp,
     simp only [hs, p, (nat.succ_eq_add_one n).symm],
     apply list.min_change,

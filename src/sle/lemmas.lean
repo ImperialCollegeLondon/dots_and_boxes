@@ -6,18 +6,17 @@ open list
 /--the zeroth element of the list is its head-/
 lemma nth_le_zero {α : Type*} [inhabited α] (l : list α) (h : _) :
   nth_le l 0 h = head l :=
+  --by cases l with a m;revert h; by exact dec_trivial; refl
+
 begin
   cases l with a m,
     exfalso, revert h, exact dec_trivial,
   refl,
 end
-
 /-- (a::b) is the same as [a] ++ b-/
 lemma cons_eq_sing_append {b : list ℤ} (a : ℤ):
-(a::b) = [a] ++ b :=
-begin 
-refl,
-end
+(a::b) = [a] ++ b := by refl
+
 
 
 /-- the ith element of the reverted list is the (length l - 1 - i)th element of the list-/
@@ -303,12 +302,14 @@ end
 
 lemma tail_drop (α : Type*) {A:list α} {m : ℕ} :
 tail (drop m A) = drop (nat.succ m) A :=
+by rw [← drop_one, drop_drop, add_comm]
+/-
 begin
 rw ← drop_one,
 rw drop_drop, 
 rw add_comm,
 end 
-
+-/
 -- lemma head_reverse (α : Type*) [inhabited α] (L : list α) :
 --   head (reverse L) = ilast L :=
 -- begin
@@ -333,13 +334,18 @@ end
 
 lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
 head (reverse (take (m+1) A)) = head (tail (drop (m-1) A)):=
+by rw [
+       tail_drop, head_reverse_take h2, nat.succ_eq_add_one, 
+       nat.sub_add_cancel h1, head_drop
+       ]
+/-
 begin
   rw tail_drop,
   rw head_reverse_take h2,
   rw [nat.succ_eq_add_one, nat.sub_add_cancel h1],
   rw head_drop,
 end
-
+-/
 
 
 lemma take_drop_head_eq' {A:list ℤ} {d : ℕ} (h2: d + 2 ≤ length A):
@@ -356,7 +362,7 @@ begin
   refl,
 end
 
-#check @take_append_of_le_length
+--#check @take_append_of_le_length
 lemma take_append_of_length_le {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
  length l₁ ≤ n →
   take n (l₁ ++ l₂) = l₁ ++ take (n - l₁.length) l₂ :=
@@ -399,7 +405,6 @@ begin
   linarith,
 end
 
-#check drop_take
 
 lemma drop_append_of_length_le {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
   length l₁ ≤ n → drop n (l₁ ++ l₂) = drop (n - l₁.length) l₂ :=
@@ -611,13 +616,28 @@ begin
 },
 end
 
+
+lemma remove_nth_eq_remove_nth_to_length_eq {α : Type*} {A B : list α}:
+∀ (n : ℕ) (hA : n < length A)(hB : n < length B), remove_nth A n = remove_nth B n → length A = length B:=
+begin
+intros n hA hB h,
+have p : length (remove_nth A n) = length (remove_nth B n), rw h,
+rw length_remove_nth at p,
+rw length_remove_nth at p,
+have pa : 1 ≤ length A := by exact nat.one_le_of_lt hA, 
+have pb : 1 ≤ length B := by exact nat.one_le_of_lt hB, 
+exact nat.pred_inj pa pb p,
+exact hB,
+exact hA,
+end
+
 /--if two lists are equal, their heads are equal-/
 lemma head_eq_of_list_eq {α : Type*} [inhabited α] {L1 L2 : list α}:
-L1 = L2 → list.head L1 = list.head L2:=
-begin
-intro h,
-rw h,
-end
+L1 = L2 → list.head L1 = list.head L2:= by intro h; rw h
+--begin
+--intro h,
+--rw h,
+--end
 
 /--the nth element of a list with an element removed is the bth or (b+1)th 
 element of the full list, depending on which element was removed-/
