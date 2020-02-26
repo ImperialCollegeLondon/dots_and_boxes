@@ -167,14 +167,15 @@ def zero (n : ℕ): game n:=
 def size2 (G : game 2) : ℕ := 
 length (G.f (0:fin 2)) + length (G.f (1:fin 2)) 
 
+def size {n : ℕ} (G : game n) : ℕ := 
+list.sum (list.of_fn (λ i, (G.f i).length))
 
-
-
-
-
---def size {n : ℕ} (G : game n) : ℕ := 
---Σ  (i : fin n), (length (G.f i))
-
+theorem size_eq_size2 (G : game 2) : G.size = G.size2 :=
+begin
+  show (0 + _) + _ = _ + _,
+  rw zero_add,
+  refl,
+end
 
 
 lemma size2_zero : (zero 2).size2 = 0 := rfl
@@ -313,7 +314,7 @@ lemma list.min'_change (L M : list ℤ) (hLM : L.length = M.length) (d : ℤ) (h
   unfold list.min',
 
   simp *,
-  have hM : ¬ (m :: Mn) = nil := by simp,
+  have hM : ¬ (m :: Mn : list ℤ) = nil := by simp,
   have hL : ¬ L = nil, 
   apply ne_nil_of_length_pos,
   rw hLM,
@@ -636,8 +637,31 @@ Define game.modify of two games G1 and G2 to be:
 Note: will now need to redefine game.value :-(
 -/
 
+/-- Remove i'th element of j'th component of G -/
+def game.remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) : game 2 := sorry 
+
+#check game.size
+lemma game.size2_remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) :
+  (G.remove j i).size2 = G.size2 - 1 := sorry 
+
 def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
-  list.min 
+  list.min (list.bind [(0 : fin 2), (1 : fin 2)] (λ j, 
+  list.of_fn $ λ (i : fin (G.f j).length), 
+      (G.f j).nth_le i.val i.is_lt - (2 * j.val + 2) + abs (2 * j.val + 2 - 
+      hn (G.remove j i) (by rw [game.size2_remove, hG, nat.add_sub_cancel])) 
+  
+  ))
+  begin
+    intro h,
+    rw [←list.length_eq_zero, list.length_bind] at h,
+    dsimp at h,
+    rw [list.length_of_fn, list.length_of_fn] at h,
+    change size G = 0 at h,
+    rw [size_eq_size2, hG] at h,
+    revert h, exact dec_trivial,
+  end
+
+  #exit
     ((list.of_fn $ λ (i : fin G.C.length),
     G.C.nth_le i.val i.is_lt - 2 + abs (2 - hn {C := G.C.remove_nth i.val, L := G.L} begin
       unfold size, unfold size at hG, cases G,  rw remove_nth_eq_nth_tail,
