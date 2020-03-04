@@ -6,7 +6,7 @@ import tactic.fin_cases
 open list
 
 -- changing one element of a list by at most d
-
+/--Two lists that are equal except one entry differs by at most d-/
 structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 (n : ℕ)
 (ha : n < A.length)
@@ -16,8 +16,8 @@ structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 
 
 
-/--Two lists that are equal except one entrydiffers by at most d have equal length-/
-theorem eq_size_of_modify_list (l1 l2 : list ℤ ) (d : ℤ) (h : list.modify l1 l2 d) : l1.length = l2.length :=
+/--Two lists that are equal except one entry differs by at most d have equal length-/
+theorem eq_size_of_modify_list {l1 l2 : list ℤ } {d : ℤ} (h : list.modify l1 l2 d) : l1.length = l2.length :=
 begin
   -- split list.modify condition into its statements
   cases h, 
@@ -50,12 +50,13 @@ begin
 
 
 
-
+/--Two lists that are equal except one entry differs by at most d are element
+wise equal in all entries except the one at which they differ-/
 theorem list.modify_same {A : list ℤ} {B : list ℤ} {d : ℤ}
   (h : list.modify A B d) (m : ℕ) (hmA : m < A.length) (hmB : m < B.length)
   (hmn : h.n ≠ m) : A.nth_le m hmA = B.nth_le m hmB :=
 begin
-  have H : length A = length B, exact eq_size_of_modify_list A B d h,
+  have H : length A = length B, exact eq_size_of_modify_list h,
   cases h, rw remove_nth_eq_nth_tail at h_heq, rw modify_nth_tail_eq_take_drop at h_heq,
   rw remove_nth_eq_nth_tail at h_heq, rw modify_nth_tail_eq_take_drop at h_heq,
   have p : length (tail (drop h_n A)) = length (tail (drop h_n B)), rw length_tail,
@@ -104,7 +105,7 @@ begin
 end
 
 
-
+/--list.modify is symmetric-/
 def list.modify.symm (A B : list ℤ) (d : ℤ) 
 (m : list.modify A B d) : list.modify B A d :=
 { n := m.n,
@@ -153,23 +154,28 @@ begin
   apply h,
 end
 
--- for use later, in the MITM proof
+/--Two games that are equal except one entry in one sublist of components differs by at most d-/
 structure modify {n : ℕ} (G1 G2 : game n) (d : ℤ) :=
 (j : fin n)
 (hk : ∀ i : fin n, i ≠ j → G1.f i = G2.f i)
 (hl : list.modify (G1.f j) (G2.f j) d)
 
+/--the empty game / completed game-/
 def zero (n : ℕ): game n:=
 {
   f := λ (i : fin n), nil
 }
 
+/--the size of a game with only chains and loops-/
 def size2 (G : game 2) : ℕ := 
 length (G.f (0:fin 2)) + length (G.f (1:fin 2)) 
 
+/--The number of components of a game-/
 def size {n : ℕ} (G : game n) : ℕ := 
 list.sum (list.of_fn (λ i, (G.f i).length))
 
+/--For a game with only chains and loops the definitions 
+of the size, size and size2, are equivalent-/
 theorem size_eq_size2 (G : game 2) : G.size = G.size2 :=
 begin
   show (0 + _) + _ = _ + _,
@@ -177,8 +183,10 @@ begin
   refl,
 end
 
+/--The size2 of the empty game is 0-/
 lemma size2_zero : (zero 2).size2 = 0 := rfl
 
+/--If size2 of a game is 0, it is the empty game-/
 lemma eq_zero_of_size2_zero (G : game 2) : G.size2 = 0 → G = zero 2 :=
 begin
   intro h,
@@ -194,6 +202,21 @@ begin
     exact h1,
     exact h2,
 end
+
+/--For two games that are equal except one entry in one sublist of components differs by at most d 
+all pairwise corresponding sublists have equal length-/
+lemma eq_list_lengths_of_modify {n : ℕ} {G1 G2 : game n} {d : ℤ} (h : modify G1 G2 d):
+∀ (i : fin n), length (G1.f i) = length (G2.f i) :=
+begin
+cases h with j heq modi, 
+intro i,
+by_cases p1 : i ≠ j,
+rw heq i p1,
+push_neg at p1,
+rw ← p1 at modi,
+exact eq_size_of_modify_list modi,
+end
+
 
 end game
 
@@ -706,14 +729,18 @@ begin
   cases h with j hj hjm, 
   unfold size2,
   fin_cases j,
-  { have h0 := eq_size_of_modify_list _ _ _ hjm, -- note: first 3 inputs to eq_size_of_modify_list should be {}
+  { have h0 := eq_size_of_modify_list hjm, 
     change length (G1.f 0) = length (G2.f 0) at h0,
     have h1 : G1.f 1 = G2.f 1,
       exact hj ⟨1, dec_trivial⟩ dec_trivial,
     rw [h0, h1],
   },
   {
-    sorry -- same proof!
+    have h0 := eq_size_of_modify_list hjm, 
+    change length (G1.f 1) = length (G2.f 1) at h0,
+    have h1 : G1.f 0 = G2.f 0,
+      exact hj ⟨0, dec_trivial⟩ dec_trivial,
+    rw [h0, h1],
   }
 end
 
@@ -739,17 +766,23 @@ begin
     unfold game.value,
     unfold game.rec_on_size2,
     unfold game.rec_on_size2',
---    dsimp,
+    dsimp,
     simp only [hs, p, (nat.succ_eq_add_one n).symm],
     apply list.min_change,
-    { rw [length_append, length_of_fn, length_of_fn, length_append, length_of_fn, length_of_fn],
+    { rw length_bind, dsimp,
+      rw [length_of_fn, length_of_fn],
+      rw length_bind, dsimp,
+      rw [length_of_fn, length_of_fn],
       show G2.size = G1.size,
+      rw size_eq_size2,
+      rw size_eq_size2,
       rw [p, hs]},
     intros i hiL hiM,
     dsimp,
-    rw [length_append, length_of_fn, length_of_fn] at hiL hiM,
-    by_cases hi : i < length (G2.C),
-    { rw nth_le_append _ _,
+    rw length_bind at hiL hiM, dsimp at hiL hiM,
+    rw [length_of_fn, length_of_fn] at hiL_1 hiM_1,
+    by_cases hi : i < length (G2.f 0),
+    { rw nth_le_append _ _, 
       swap,
         rw length_of_fn,
         exact hi,
@@ -757,6 +790,7 @@ begin
       swap,
       -- need a theorem which eats p2 : game.modify G1 G2 d and
       -- spits out a proof that length G1.C = length G2.c
+      -----Created it. It is called eq_list_lengths_of_modify
       { rw length_of_fn,sorry      },
       rw nth_le_of_fn' _ _ hi,
       rw nth_le_of_fn' _ _ _,

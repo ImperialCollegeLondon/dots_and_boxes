@@ -10,7 +10,9 @@ lemma nth_le_zero {α : Type*} [inhabited α] (l : list α) (h : _) :
 
 begin
   cases l with a m,
-    exfalso, revert h, exact dec_trivial,
+    exfalso,
+    revert h, 
+    exact dec_trivial,
   refl,
 end
 /-- (a::L) is the same as [a] ++ L-/
@@ -125,7 +127,7 @@ rw nth_le_reverse' _ _ _ _,
 end
 
 /-- dropping no elements from a list gives the list-/
-lemma drop_zero {α : Type*} {L : list α}: drop 0 L = L := begin refl, end
+lemma drop_zero {α : Type*} {L : list α}: drop 0 L = L := by refl
 
 /--If the first x+1 elements of two lists are the same, so are the first x-/
 lemma take_lemma_base_case {A B : list ℤ} {x: ℕ } :
