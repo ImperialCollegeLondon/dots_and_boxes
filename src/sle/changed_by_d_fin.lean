@@ -157,7 +157,7 @@ end
 /--Two games that are equal except one entry in one sublist of components differs by at most d-/
 structure modify {n : ℕ} (G1 G2 : game n) (d : ℤ) :=
 (j : fin n)
-(hk : ∀ i : fin n, i ≠ j → G1.f i = G2.f i)
+(hj : ∀ i : fin n, i ≠ j → G1.f i = G2.f i)
 (hl : list.modify (G1.f j) (G2.f j) d)
 
 /--the empty game / completed game-/
@@ -165,6 +165,8 @@ def zero (n : ℕ): game n:=
 {
   f := λ (i : fin n), nil
 }
+
+
 
 /--the size of a game with only chains and loops-/
 def size2 (G : game 2) : ℕ := 
@@ -724,6 +726,44 @@ def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ
     revert h, exact dec_trivial,
   end
 
+theorem game.value_def (G : game 2) (n : ℕ) (hG : G.size2 = nat.succ n):
+  game.value G =
+  list.min (list.bind [(0 : fin 2), (1 : fin 2)] (λ j, 
+  list.of_fn $ λ (i : fin (G.f j).length), 
+      (G.f j).nth_le i.val i.is_lt - (2 * j.val + 2) + abs (2 * j.val + 2 - 
+  game.value (G.remove j i))))
+  begin
+    intro h,
+    rw [←list.length_eq_zero, list.length_bind] at h,
+    dsimp at h,
+    rw [list.length_of_fn, list.length_of_fn] at h,
+    change size G = 0 at h,
+    rw [size_eq_size2, hG] at h,
+    revert h, exact dec_trivial,
+  end
+:=
+begin
+  unfold game.value,
+  unfold game.rec_on_size2,
+  unfold game.rec_on_size2',
+  simp only [hG],
+  congr',
+  ext i n0 n1,
+  congr',
+  ext j,
+  congr',
+  rw game.size2_remove,
+  rw hG,
+  exact (nat.add_sub_cancel n 1).symm
+end
+
+theorem list.bind_fin2 {α : Type*} (f : fin 2 → list α) : 
+  list.bind [0, 1] f = f 0 ++ f 1 :=
+begin
+  show f 0 ++ (f 1 ++ nil) = f 0 ++ f 1,
+  rw append_nil,
+end
+
 theorem eq_size_of_modify {G1 G2 : game 2} {d : ℤ} (h : game.modify G1 G2 d) : G1.size2 = G2.size2 :=
 begin
   cases h with j hj hjm, 
@@ -763,11 +803,8 @@ begin
   { intros n H G1 p G2 p2,
     have hs := eq_size_of_modify p2,
     rw p at hs,
-    unfold game.value,
-    unfold game.rec_on_size2,
-    unfold game.rec_on_size2',
-    dsimp,
-    simp only [hs, p, (nat.succ_eq_add_one n).symm],
+    rw game.value_def _ _ hs,
+    rw game.value_def _ _ p,
     apply list.min_change,
     { rw length_bind, dsimp,
       rw [length_of_fn, length_of_fn],
@@ -778,31 +815,80 @@ begin
       rw size_eq_size2,
       rw [p, hs]},
     intros i hiL hiM,
-    dsimp,
     rw length_bind at hiL hiM, dsimp at hiL hiM,
     rw [length_of_fn, length_of_fn] at hiL_1 hiM_1,
+    simp only [list.bind_fin2],
     by_cases hi : i < length (G2.f 0),
-    { rw nth_le_append _ _, 
+    { rw nth_le_append _ _,
       swap,
-        rw length_of_fn,
+      { rw length_of_fn,
         exact hi,
+      },
       rw nth_le_append _ _,
       swap,
       -- need a theorem which eats p2 : game.modify G1 G2 d and
       -- spits out a proof that length G1.C = length G2.c
       -----Created it. It is called eq_list_lengths_of_modify
-      { rw length_of_fn,sorry      },
+      { rw length_of_fn,
+        convert hi using 1,
+        symmetry,
+        apply eq_list_lengths_of_modify p2,
+      },
       rw nth_le_of_fn' _ _ hi,
       rw nth_le_of_fn' _ _ _,
-      swap, sorry, -- need that lengths are equal again
-      -- now we do cases on whether 
-      
-        
-      
-      sorry},
+      swap, 
+      { convert hi using 1,
+        symmetry,
+        apply eq_list_lengths_of_modify p2,
+      },
+      by_cases hj : p2.j = 0,
+      { set p2l := p2.hl with hp2l,
+        set p2n := p2l.n with p2ln,
+        by_cases hni : p2n = i,
+        { have hG1G2 : game.remove G1 0 ⟨i, begin
+            convert hi using 1,
+            symmetry,
+            apply eq_list_lengths_of_modify p2, 
+          end⟩ = game.remove G2 0 ⟨i, hi⟩,
+          { apply game.ext,
+            intros a ha,
+            cases a with a,
+            { unfold game.remove,
+              dsimp,
+              rw dif_pos, swap, refl,
+              rw dif_pos, swap, refl,
+              rw ←hni,
+              rw p2ln,
+              convert p2l.heq.symm; rw hj,
+            },
+            { cases a with a, swap, cases ha, cases ha_a, cases ha_a_a,
+              unfold game.remove,
+              dsimp,
+              rw dif_neg, swap, exact dec_trivial,
+              rw dif_neg, swap, exact dec_trivial,
+              convert (p2.hj 1 _).symm using 1,
+              rw hj,
+              exact dec_trivial,
+            }
+          },
+          rw hG1G2,
+          convert p2l.bound using 1,
+          apply congr_arg,
+          dsimp,
+          simp only [p2ln.symm, hni, hj],
+          ring
+        },
+        { sorry},
+      },
+      { sorry},
+    },
     { sorry},
   },
 end
+
+#check game.remove
+#check game.modify
+#check list.modify
 /- todo
 
 1) Fill in sorrys (first two shouldn't be hard, third might be more of a challenge, but I am pretty
