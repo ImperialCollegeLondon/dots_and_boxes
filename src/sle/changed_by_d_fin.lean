@@ -3,6 +3,17 @@ import tactic.omega tactic.apply
 import sle.lemmas
 import tactic.fin_cases
 
+-- put somewhere more sensible?
+theorem abs_abs_sub_abs_le (a b : ℤ) : abs (abs a - abs b) ≤ abs (a - b) :=
+abs_le.2 ⟨by rw [neg_le,neg_sub, abs_sub]; apply sub_abs_le_abs_sub, sub_abs_le_abs_sub a b⟩
+
+theorem sum_list2 (α : Type*) [add_monoid α] (x y : α) : list.sum [x, y] = x + y :=
+begin
+  rw list.sum_cons,
+  rw list.sum_cons,
+  rw list.sum_nil,
+  rw add_zero,
+end
 open list
 
 -- changing one element of a list by at most d
@@ -851,24 +862,22 @@ begin
   }
 end
 
-
-
-
-#exit
-
 -- this is the big challenge
 theorem MITM (G1 G2 : game 2) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
  abs(G1.value - G2.value) ≤ d :=
 begin
   revert G1,
   revert G2,
+  -- induction on size of G2
   apply @game.rec_on_size2 (λ G2, ∀ G1, modify G1 G2 d → 
   abs (game.value G1 - game.value G2) ≤ d),
   -- this might be tricky!
-  { intros G h1, have h3 : G.size2 = (zero 2).size2 := eq_size_of_modify h1,
+  { -- base case
+  intros G h1, have h3 : G.size2 = (zero 2).size2 := eq_size_of_modify h1,
   rw size2_zero at h3, have H := eq_zero_of_size2_zero _ h3, 
   rw H, show  0 ≤ d, exact h2},
-  { intros n H G1 p G2 p2,
+  { -- inductive step
+    intros n H G1 p G2 p2,
     have hs := eq_size_of_modify p2,
     rw p at hs,
     rw game.value_def _ _ hs,
@@ -887,7 +896,12 @@ begin
     rw [length_of_fn, length_of_fn] at hiL_1 hiM_1,
     simp only [list.bind_fin2],
     by_cases hi : i < length (G2.f 0),
-    { rw nth_le_append _ _,
+    { 
+      have lengthf0 : length (G2.f 0) = length (G1.f 0),
+        apply eq_list_lengths_of_modify p2,
+      have hi2 : i < length (G1.f 0),
+        rw ←lengthf0, exact hi,
+      rw nth_le_append _ _,
       swap,
       { rw length_of_fn,
         exact hi,
@@ -910,7 +924,14 @@ begin
         apply eq_list_lengths_of_modify p2,
       },
       by_cases hj : p2.j = 0,
-      { set p2l := p2.hl with hp2l,
+      { 
+        have Hind := (H (game.remove G2 0 ⟨i, hi⟩) _ (game.remove G1 0 ⟨i, hi2⟩) (game.remove_of_modify_symm p2 0 ⟨i, hi⟩ ⟨i, hi2⟩ (by refl))),
+        swap,
+        { rw game.size2_remove,
+          rw hs,
+          exact nat.add_sub_cancel n 1,
+        },
+        set p2l := p2.hl with hp2l,
         set p2n := p2l.n with p2ln,
         by_cases hni : p2n = i,
         { have hG1G2 : game.remove G1 0 ⟨i, begin
@@ -953,7 +974,8 @@ begin
           
           
           --rw hj at p2l,
-          have nth_le_eq : nth_le (G2.f 0) i _ = nth_le (G1.f 0) i _,
+
+          have nth_le_eq : nth_le (G2.f 0) i hi = nth_le (G1.f 0) i hi2,
           apply list.modify_same _ i _ _ _,
           exact d,
           simp only [hj] at p2l,
@@ -985,58 +1007,51 @@ begin
               d
               (eq.refl d))
           p2l,--up to here by library_search
-          simp only [nth_le_eq],
+          rw nth_le_eq,
           
-          convert (H (game.remove G2 0 ⟨i, hi⟩) _ (game.remove G1 0 ⟨i, _⟩) (game.remove_of_modify_symm p2 0 ⟨i, hi⟩ ⟨i, _⟩ (by refl))) using 1,
-          {apply congr_arg,
-          dsimp,
-          --simp only [p2ln.symm, hni, hj],
-          ring,
-          sorry,
-          },
-          { convert hi using 1,
-            symmetry,
-            apply eq_list_lengths_of_modify p2,
-          },
-          { convert hi using 1,
-            symmetry,
-            apply eq_list_lengths_of_modify p2,
-          },
+          have Hind := (H (game.remove G2 0 ⟨i, hi⟩) _ (game.remove G1 0 ⟨i, hi2⟩) (game.remove_of_modify_symm p2 0 ⟨i, hi⟩ ⟨i, hi2⟩ (by refl))),
+          swap,
           {rw game.size2_remove,
            rw hs,
            exact nat.add_sub_cancel n 1,
           },
-          {exact hi,
+          suffices : abs
+            (abs (2 - game.value (game.remove G2 0 ⟨i, hi⟩)) -
+             abs (2 - game.value (game.remove G1 0 ⟨i, hi2⟩))) ≤ d,
+          { convert this using 2,
+            rw [(show ((0 : fin 2).val : ℤ) = 0, by norm_cast), mul_zero, zero_add],
+            ring,
           },
-          
-
+          apply le_trans (abs_abs_sub_abs_le _ _),
+          convert Hind using 2,
+          ring,
         },
       },
       { have G1G2_1 : G2.f 0 = G1.f 0,
         rw eq_comm at hj,
         exact p2.hj 0 hj,
         simp only [G1G2_1],
-        { convert (H (game.remove G2 0 ⟨i, hi⟩) _ (game.remove G1 0 ⟨i, _⟩) (game.remove_of_modify_symm p2 0 ⟨i, hi⟩ ⟨i, _⟩ (by refl))) using 1,
-          {apply congr_arg,
-          dsimp,
-          --simp only [p2ln.symm, hni, hj],
-          ring,
-          sorry,
-          },
-          { convert hi using 1,
-            symmetry,
-            apply eq_list_lengths_of_modify p2,
-          },
+        { have Hind := (H (game.remove G2 0 ⟨i, hi⟩) _ (game.remove G1 0 ⟨i, hi2⟩) (game.remove_of_modify_symm p2 0 ⟨i, hi⟩ ⟨i, hi2⟩ (by refl))),
+         swap,
           {rw game.size2_remove,
            rw hs,
            exact nat.add_sub_cancel n 1,
           },
-
+suffices : abs
+            (abs (2 - game.value (game.remove G2 0 ⟨i, hi⟩)) -
+             abs (2 - game.value (game.remove G1 0 ⟨i, hi2⟩))) ≤ d,
+          { convert this using 2,
+            rw [(show ((0 : fin 2).val : ℤ) = 0, by norm_cast), mul_zero, zero_add],
+            ring,
+          },
+          apply le_trans (abs_abs_sub_abs_le _ _),
+          convert Hind using 2,
+          ring,
+        },
         },
 
         },
-    },
-    { 
+    { -- i not < length G0
       
       push_neg at hi,
       rw nth_le_append_right _ _,
@@ -1054,8 +1069,9 @@ begin
         symmetry,
         apply eq_list_lengths_of_modify p2,
       },
+      rw sum_list2 at hiL_1,
       have hi_new : i - length (G2.f 0) < length (G2.f 1), 
-      { sorry
+      { rwa [nat.sub_lt_right_iff_lt_add hi, add_comm],
       },
       simp only [length_of_fn],
       rw nth_le_of_fn' _ _ hi_new,
@@ -1115,10 +1131,14 @@ begin
           -- should use list.modify_same, but duplicates create
           -- problems (come from nth_le as well)
           
-          
+          have h1length : length (G2.f 1) = length (G1.f 1),
+            apply eq_list_lengths_of_modify p2,
+          have hi_new2 : i - length (G2.f 0) < length (G1.f 1),
+            rw ←h1length,
+            exact hi_new,
           --rw hj at p2l,
-          have nth_le_eq : nth_le (G2.f 1) (i - length (G2.f 0)) _ 
-          = nth_le (G1.f 1) (i - length (G2.f 0)) _,
+          have nth_le_eq : nth_le (G2.f 1) (i - length (G2.f 0)) hi_new 
+          = nth_le (G1.f 1) (i - length (G2.f 0)) hi_new2,
           apply list.modify_same _ (i - length (G2.f 0)) _ _ _,
           exact d,
           simp only [hj] at p2l,
@@ -1150,36 +1170,34 @@ begin
             d
             (eq.refl d))
           p2l,--up to here by library_search
-          simp only [nth_le_eq],
-          
-          convert (H (game.remove G2 1 ⟨i - length (G2.f 0), hi_new⟩) _ (game.remove G1 1 ⟨i - length (G1.f 0), _⟩) 
-          (game.remove_of_modify_symm p2 1 ⟨i - length (G2.f 0), hi_new⟩ ⟨i - length (G1.f 0), _⟩ _)) using 1,
-          {apply congr_arg,
-          dsimp,
-          --simp only [p2ln.symm, hni, hj],
-          ring,
-          sorry,
-          },
-          { convert hi_new using 1,
+          rw nth_le_eq,
+          have hi_new2' : i - length (G1.f 0) < length (G1.f 1),
+            convert hi_new2 using 2,
             symmetry,
             apply eq_list_lengths_of_modify p2,
+          have h0length : length (G2.f 0) = length (G1.f 0),
+            apply eq_list_lengths_of_modify p2,
+          suffices : abs (
+            abs (4 - game.value (game.remove G2 1 ⟨i - length (G2.f 0), hi_new⟩))
+            - abs (4 - game.value (game.remove G1 1 ⟨i - length (G1.f 0), hi_new2'⟩))
+          ) ≤ d, 
+          { convert this using 2,
+            rw (show (((1 : fin 2).val) : ℤ) = 1, by norm_cast),
+            simp only [h0length],
+            ring,
           },
-          { convert hi_new using 1,
-            {symmetry,
-            apply congr_arg (λ {b : ℕ}, i - b),
-            exact eq_list_lengths_of_modify p2 0,},
-            symmetry,
-            exact eq_list_lengths_of_modify p2 1,
+          refine le_trans (abs_abs_sub_abs_le _ _) _,
+          have Hind := (H (game.remove G2 1 ⟨i - length (G2.f 0), hi_new⟩) _ (game.remove G1 1 ⟨i - length (G1.f 0), _⟩) 
+          (game.remove_of_modify_symm p2 1 ⟨i - length (G2.f 0), hi_new⟩ ⟨i - length (G1.f 0), _⟩ _)),
+          { convert Hind using 2,
+            ring,
+            exact hi_new2',
           },
-          {rw game.size2_remove,
+          { rw game.size2_remove,
            rw hs,
            exact nat.add_sub_cancel n 1,
           },
-          {apply congr_arg (λ {b : ℕ}, i - b),
-           exact eq_list_lengths_of_modify p2 0,
-          },
-          {exact hi_new},
-
+          dsimp, rw h0length,
         },
       },
       { have G1G2_1 : G2.f 1 = G1.f 1,
@@ -1213,9 +1231,10 @@ begin
         },
 
         },
-        },
+    },
   },
 end
+
 
 /- todo
 
