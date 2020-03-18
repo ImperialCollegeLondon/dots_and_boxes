@@ -445,6 +445,31 @@ end
 lemma remove_nth_zero {α : Type*} (L : list α) : remove_nth L 0 = tail L :=
 by cases L; refl
 
+lemma remove_nth_succ {α : Type*}  [inhabited α]{n : ℕ} ( L : list α) ( l : α ): remove_nth (l::L) (nat.succ n) = 
+l :: remove_nth L n:=  
+begin
+cases L, refl,refl,
+end
+
+lemma remove_nth_large_n {α : Type*}  [inhabited α]{n : ℕ} (L : list α) (h : length L ≤ n): 
+remove_nth L n = L :=
+begin
+revert L,
+induction n with d hd,
+intros L h,
+have p : L = nil,
+rw ←  length_eq_zero, 
+exact le_zero_iff_eq.mp h,
+rw p, refl,
+intro L,
+cases L with l Lt,
+intro h, refl,
+intro h,
+rw remove_nth_succ Lt l,
+rw length_cons at h,
+rw hd Lt (nat.le_of_succ_le_succ h),
+end
+
 /--changing the order of element removel of a list of naturals-/
 lemma remove_nth_remove_nth {a b : ℕ } (L : list ℤ)(Ha : a ≤ length L)(Hb : b + 1 ≤ length L):
 remove_nth (remove_nth L a) b = if a < (b + 1) then remove_nth (remove_nth L (b+1)) a 
