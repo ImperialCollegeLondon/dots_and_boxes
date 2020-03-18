@@ -772,3 +772,13 @@ end
   nth_le (of_fn f) i ((length_of_fn f).symm ▸ hi) = f ⟨i, hi⟩ :=
 option.some.inj $ by rw [← nth_le_nth];
   simp only [list.nth_of_fn, of_fn_nth_val, fin.eta, dif_pos hi]
+
+
+lemma abs_le_nonneg {a b : ℤ } : abs(a) ≤ b → 0 ≤ b:=
+begin 
+have h : 0 ≤ abs(a),
+ show abs(a) ≥ 0,
+ exact abs_nonneg a,
+ intro x,
+ exact le_trans h x,
+ end

@@ -727,7 +727,7 @@ end
 
 
 lemma list.modify_remove_nth {L1 : list ℤ} {L2 : list ℤ} {d : ℤ}
-  (h : list.modify L1 L2 d) (m : ℕ):
+  (h : list.modify L1 L2 d) (hL : 1 < length L1) (m : ℕ):
   list.modify (remove_nth L1 m) (remove_nth L2 m) d:=
 begin
 by_cases hm : m < length L1,
@@ -742,14 +742,57 @@ swap,
  rw x2,
  exact h,
 },
+have hlength : length L1 = length L2,
+exact eq_size_of_modify_list h,
 cases h,
 cases h_n,
-{by_cases c1 : m=0,
-rw c1,
-rw h_heq,
-exact list.modify_refl _ _,},
+{cases m,
+rw ← h_heq,
+apply list.modify_refl _ _,
+rw length_remove_nth,
+exact nat.lt_pred_iff.mpr hL,
+exact h_ha,
+exact abs_le_nonneg h_bound,
+split, swap 3,
+{exact 0},
+{rw remove_nth_remove_nth,
+ split_ifs,
+ {exfalso, 
+ rw zero_add at h,
+ rw nat.succ_eq_add_one at h,
+ have p : m < 0, 
+ exact add_lt_iff_neg_right.mp h,
+ exact nat.not_succ_le_zero m p,
+  },
+ {rw h_heq,
+ rw remove_nth_remove_nth,
+ split_ifs,
+ {rw nat.sub_add_cancel, exact h_1},
+ {exfalso,push_neg at h_1,
+  rw nat.sub_add_cancel at h_1,
+  exact nat.not_succ_le_zero m h_1,
+  exact not_lt.mp h,},
+  exact zero_le (length L2),
+  rw ← hlength,
+  rw nat.sub_add_cancel,
+  exact le_of_lt hm,
+  rw zero_add at h,
+  push_neg at h,
+  exact h,
+ },
+ exact le_of_lt hm,
+ rw zero_add,
+ exact le_of_lt hL,
+ },
+{sorry},
+{sorry},
+{sorry},
+
+}, sorry,
 
 end
+
+
   
 
 
