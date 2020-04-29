@@ -614,23 +614,6 @@ begin
     --and h_n if h_n < i.val
     cases h,
 
-    -- prove PL1 : length (remove_nth L1 (i.val)) = e, 
-    -- and PL2 : length (remove_nth L2 (i.val)) = e to use as arguments for he
-    have PL1 : length (remove_nth L1 (i.val)) = e,
-      rw length_remove_nth,
-      rw hL1,
-      rw nat.succ_eq_add_one,
-      rw nat.add_sub_cancel,
-      rw hL1,
-      exact i.is_lt,
-
-    have PL2 : length (remove_nth L2 (i.val)) = e,
-      rw length_remove_nth,
-      rw hL2,
-      rw nat.succ_eq_add_one,
-      rw nat.add_sub_cancel,
-      rw hL2,
-      exact i.is_lt,
     rw length_of_fn at HnL HnM,
     rw nth_le_of_fn _ ⟨n, HnL⟩,
     rw nth_le_of_fn _ ⟨n, HnM⟩,
@@ -639,22 +622,6 @@ begin
     }
 end
 
--- proposal : define a game to be 
-/-
-1) a size s (number of lists -- two in our case)
-2) list of the tf's (list of nats of size s)
-3) a function from `fin s` to `list ℕ` or `list ℤ` or whatever
-
-Define game.modify of two games G1 and G2 to be:
-
-1) i : fin s
-2) Proof that the j'th lists are equal if j ≠ i
-3) n : fin (length of i'th list)
-4) proof that i'th lists are equal away from n'th place
-5) Proove that values of n'th place of i'th list differ by at most d.
-
-Note: will now need to redefine game.value :-(
--/
 
 /-- Remove i'th element of j'th component of G -/
 def game.remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) : game 2 :=
@@ -840,8 +807,9 @@ begin
   }
 end
 
--- this is the big challenge
-theorem MITM (G1 G2 : game 2) (d : ℤ) (h1 : game.modify G1 G2 d) (h2 : 0 ≤ d):
+/-- the values of two games, that differ in exactly one component by at most d
+d, differ by at most d-/
+theorem MITM (G1 G2 : game 2) (d : ℤ) (h1 : game.modify G1 G2 d):
  abs(G1.value - G2.value) ≤ d :=
 begin
   revert G1,
@@ -853,7 +821,7 @@ begin
   { -- base case
   intros G h1, have h3 : G.size2 = (zero 2).size2 := eq_size_of_modify h1,
   rw size2_zero at h3, have H := eq_zero_of_size2_zero _ h3, 
-  rw H, show  0 ≤ d, exact h2},
+  rw H, show  0 ≤ d, exact abs_le_nonneg h1.hl.bound,},
   { -- inductive step
     intros n H G1 p G2 p2,
     have hs := eq_size_of_modify p2,
@@ -1241,11 +1209,4 @@ suffices : abs
 end
 
 
-/- todo
-
-1) Fill in sorrys (first two shouldn't be hard, third might be more of a challenge, but I am pretty
-sure I can do it)
-2) Prove that if `h : game.modify G1 G2 d` then int.nat_abs(G1.value - G2.value) <= d by induction on size
-
--/
 

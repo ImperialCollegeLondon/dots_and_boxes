@@ -254,7 +254,8 @@ exact hd triv1 triv2 triv3 H_new,
 
 end
 
-/--If dropping the first x elements of two lists gives the same list, so does dropping the first x + 1-/
+/--If dropping the first x elements of two lists gives the same list, 
+   so does dropping the first x + 1-/
 lemma drop_lemma_base_case {A B : list ℤ} {x: ℕ } :
 drop x A = drop x B → drop (nat.succ x) A = drop (nat.succ x) B :=
 begin 
@@ -318,6 +319,8 @@ end
 --   sorry -- may not need this!
 -- end
 
+/--The head of a list with its first m element dropped is
+   its (m+1)th element-/
 lemma head_drop (α : Type*) [inhabited α] (L : list α) (m : ℕ) (hm : m < L.length):
   head (drop m L) = nth_le L m hm :=
 begin
@@ -331,7 +334,7 @@ begin
   intros L hm,
   induction L with a M H,
     cases hm,
-  apply hd,
+  exact hd M _,
 end
 
 lemma take_drop_head_eq {A:list ℤ} {m : ℕ} (h1: 1 ≤ m) (h2: m + 1 ≤ length A):
@@ -354,14 +357,33 @@ lemma take_drop_head_eq' {A:list ℤ} {d : ℕ} (h2: d + 2 ≤ length A):
 head (reverse (take (d+2) A)) = head (tail (drop d A)):=
 by rw [tail_drop, head_reverse_take h2, head_drop]
 
-
-lemma remove_nth_eq_take_add_drop (a : ℕ) (L : list ℤ) :
-  remove_nth L a = take a L ++ drop (a + 1) L :=
+/--The list with element n removed is the same as the list ccreated by
+   appending the list containing all its elements after element n to the 
+   list containing its elements up to and excluding element n-/
+lemma remove_nth_eq_take_add_drop (n : ℕ) (L : list ℤ) :
+  remove_nth L n = take n L ++ drop (n + 1) L :=
 begin
-  rw remove_nth_eq_nth_tail,
-  rw modify_nth_tail_eq_take_drop,
-  rw tail_drop,
-  refl,
+  --state of goal : remove_nth L n = take n L ++ drop (n + 1) L
+
+  rw remove_nth_eq_nth_tail, -- remove_nth L n = modify_nth_tail tail n L
+
+  --state of goal : modify_nth_tail tail n L = take n L ++ drop (n + 1) L
+
+  rw modify_nth_tail_eq_take_drop, -- modify_nth_tail tail n L = 
+                                   -- take n L ++ tail (drop n L),
+                                   -- if tail nil = nil
+
+  --state of goal : 2 goals
+  -- 1st goal : take n L ++ tail (drop n L) = take n L ++ drop (n + 1) L
+  -- 2nd goal : tail nil = nil (created as hypothesis is needed)
+
+  rw tail_drop, --tail (drop n L) = drop (nat.succ n) L
+
+  --tactic state : one goal left; tail nil = nil
+
+  refl, -- true by definition of tail
+
+  --tactic state : goals accomplished
 end
 
 --#check @take_append_of_le_length
@@ -445,10 +467,37 @@ end
 lemma remove_nth_zero {α : Type*} (L : list α) : remove_nth L 0 = tail L :=
 by cases L; refl
 
-lemma remove_nth_succ {α : Type*}  [inhabited α]{n : ℕ} ( L : list α) ( l : α ): remove_nth (l::L) (nat.succ n) = 
-l :: remove_nth L n:=  
+lemma remove_nth_succ {α : Type*}  [inhabited α]{n : ℕ} ( L : list α) ( l : α ): 
+remove_nth (l::L) (nat.succ n) = l :: remove_nth L n:=  
 begin
-cases L, refl,refl,
+
+--tactic state :  α : Type u_1,
+--                _inst_1 : inhabited α,
+--                n : ℕ,
+--                L : list α,
+--                l : α
+--                ⊢ remove_nth (l :: L) (nat.succ n) = l :: remove_nth L n
+
+cases L with a L1, 
+
+--tactic state : 2 goals
+--               case list.nil
+--               α : Type u_1,
+--               _inst_1 : inhabited α,
+--               n : ℕ,
+--               l : α
+--               ⊢ remove_nth [l] (nat.succ n) = l :: remove_nth nil n
+
+--               case list.cons
+--               α : Type u_1,
+--               _inst_1 : inhabited α,
+--               n : ℕ,
+--               l a : α,
+--               L1 : list α
+--               ⊢ remove_nth (l :: a :: L1) (nat.succ n) = 
+--                 l :: remove_nth (a :: L1) n
+refl,
+refl,
 end
 
 lemma remove_nth_large_n {α : Type*}  [inhabited α]{n : ℕ} (L : list α) (h : length L ≤ n): 
@@ -460,10 +509,12 @@ intros L h,
 have p : L = nil,
 rw ←  length_eq_zero, 
 exact le_zero_iff_eq.mp h,
-rw p, refl,
+rw p, 
+refl,
 intro L,
 cases L with l Lt,
-intro h, refl,
+intro h, 
+refl,
 intro h,
 rw remove_nth_succ Lt l,
 rw length_cons at h,
@@ -643,12 +694,46 @@ begin
 },
 end
 
-
+/-- If two lists each with their nth element removed are the same,
+    then their lengths are the same-/
 lemma remove_nth_eq_remove_nth_to_length_eq {α : Type*} {A B : list α}:
-∀ (n : ℕ) (hA : n < length A)(hB : n < length B), remove_nth A n = remove_nth B n → length A = length B:=
+∀ (n : ℕ) (hA : n < length A)(hB : n < length B), remove_nth A n = remove_nth B n 
+→ length A = length B:=
 begin
 intros n hA hB h,
-have p : length (remove_nth A n) = length (remove_nth B n), rw h,
+
+--Tactic state : α : Type u_1,
+--               A B : list α,
+--               n : ℕ,
+--               hA : n < length A,
+--               hB : n < length B,
+--               h : remove_nth A n = remove_nth B n
+--               ⊢ length A = length B
+
+have p : length (remove_nth A n) = length (remove_nth B n), 
+
+--Tactic state : 2 goals
+--               α : Type u_1,
+--               A B : list α,
+--               n : ℕ,
+--               hA : n < length A,
+--               hB : n < length B,
+--               h : remove_nth A n = remove_nth B n
+--               ⊢ length (remove_nth A n) = 
+--                 length (remove_nth B n)
+
+--               α : Type u_1,
+--               A B : list α,
+--               n : ℕ,
+--               hA : n < length A,
+--               hB : n < length B,
+--               h : remove_nth A n = remove_nth B n
+--               p : length A - 1 = length (remove_nth B n)
+--               ⊢ length A = length B
+
+
+  rw h,
+
 rw length_remove_nth at p,
 rw length_remove_nth at p,
 have pa : 1 ≤ length A := by exact nat.one_le_of_lt hA, 
@@ -660,11 +745,21 @@ end
 
 /--if two lists are equal, their heads are equal-/
 lemma head_eq_of_list_eq {α : Type*} [inhabited α] {L1 L2 : list α}:
-L1 = L2 → list.head L1 = list.head L2:= by intro h; rw h
---begin
---intro h,
---rw h,
---end
+L1 = L2 → list.head L1 = list.head L2:= 
+begin
+--Tactic state: α : Type u_1,
+--              _inst_1 : inhabited α,
+--              L1 L2 : list α
+--              ⊢ L1 = L2 → head L1 = head L2
+intro h,
+--Tactic state: α : Type u_1,
+--              _inst_1 : inhabited α,
+--              L1 L2 : list α
+--              h : L1 = L2
+--              ⊢ head L1 = head L2
+rw h,
+--Tactic state: goals accomplished
+end
 
 /--the nth element of a list with an element removed is the bth or (b+1)th 
 element of the full list, depending on which element was removed-/
@@ -762,9 +857,27 @@ end
 /--if ∃ an element strictly between a and the sucessor of c in ℕ, then a is smaller than c -/
 lemma lt_trans_of_succ {a b c : ℕ}: a < b → b < nat.succ c → a < c :=
 begin
+-- tactic state : a b c : ℕ
+--                ⊢ a < b → b < nat.succ c → a < c
+
 intros h1 h2,
+
+-- tactic state : a b c : ℕ
+--                h1 : a < b,
+--                h2 : b < nat.succ c
+--                ⊢ a < c
+
 rw nat.lt_succ_iff at h2,
+-- says b < nat.succ c ↔ b ≤ c
+
+-- tactic state : a b c : ℕ
+--                h1 : a < b,
+--                h2 : b < nat.succ c
+--                ⊢ a < c
+
 exact lt_of_lt_of_le h1 h2,
+
+-- tactic state : goals accomplished
 end
 
 @[simp] theorem nth_le_of_fn' {α : Type*} {n : ℕ} (f : fin n → α)
@@ -781,4 +894,5 @@ have h : 0 ≤ abs(a),
  exact abs_nonneg a,
  intro x,
  exact le_trans h x,
- end
+end
+
