@@ -5,7 +5,7 @@ open list
 open game
 
 
-
+/--the value of a game with only loops and chains-/
 def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ n hn G hG,
   list.min (list.bind [(0 : fin 2), (1 : fin 2)] (λ j, 
   list.of_fn $ λ (i : fin (G.f j).length), 
@@ -22,6 +22,7 @@ def game.value : game 2 → ℤ := @game.rec_on_size2 (λ G, ℤ) (0 : ℤ) $ λ
     revert h, exact dec_trivial,
   end
 
+/--equivalence to a simpler definition given the size of the game-/
 theorem game.value_def (G : game 2) (n : ℕ) (hG : G.size2 = nat.succ n):
   game.value G =
   list.min (list.bind [(0 : fin 2), (1 : fin 2)] (λ j, 

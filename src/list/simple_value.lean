@@ -1,17 +1,29 @@
 import tactic.linarith list.min.basic
 
+-- tf = 2 if we are talking about chains and 4 otherwise
 
-/-- Let G be all chains or loops. If m is a component of G, and
-  vL = value of game G with m removed, list.aux_fun this is the value of G given
-  that we're playing m -/
+-- all games are assumed to consist only of loops or only of chains
+
+/-- Let G be all chains or loops. If m is the length of a component of G, and
+  vL = value of game G with that component removed, list.aux_fun this is the 
+  value of G given that we're playing in that component -/
 def list.aux_fun (m tf vL : ℤ) := m - tf + abs(tf - vL)
 
+
+/--if two components M1, M2 differ by at most d in length 
+  and v(G1;M1) = v(G2;M2), then the value given we are playing 
+  in any of them differs by at most d-/
 theorem list.aux_fun_L1 {m1 m2 tf vL d : ℤ} (hm : abs (m1 - m2) ≤ d) :
   abs(list.aux_fun m1 tf vL - list.aux_fun m2 tf vL) ≤ d :=
 begin
   unfold list.aux_fun, finish,
 end
 
+
+/--if we have two games with a component of length m of the same
+   type and the values of each game with such a component removed
+   differ by at most d then the value given we are playing in such
+   a component in any of them differs by at most d-/
 theorem list.aux_fun_L2 {m tf vL1 vL2 d : ℤ} (hm : abs (vL1 - vL2) ≤ d) :
   abs(list.aux_fun m tf vL1 - list.aux_fun m tf vL2) ≤ d :=
 begin
@@ -32,7 +44,8 @@ begin
 end
 
 
-/-- Value of all-chain or all-loop game L given that we're playing in i'th component -/
+/-- Value of all-chain or all-loop game L with n components
+ given that we are opening the i'th component first-/
 definition list.value_i (tf : ℤ) :
   ∀ (n : ℕ) (L : list ℤ) (i : fin n) (hL : L.length = n), ℤ
 | (0) L i h := begin exfalso,  exact fin.elim0 i, end -- i gives a contradiction

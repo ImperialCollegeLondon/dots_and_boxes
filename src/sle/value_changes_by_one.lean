@@ -61,12 +61,15 @@ def one_chain_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains)(P2 : 4 ≤ a):
 }
 
 
+lemma
+
 
 
 /--increasing the length of one loop of a olsle by one changes the value of the game by one-/
 theorem value_loop_plus_one (G : olsle)(a : ℕ )(P : a ∈ G.loops) (G' : olsle) (G' = (one_loop_plus_one G a P)) :
 olvalue G' = olvalue G + 1 ∨ olvalue G' = olvalue G - 1 := 
 begin 
+unfold olvalue, rw olvalue_aux_eq, 
 sorry
 end
 /--decreasing the length of one loop of a olsle by one changes the value of the game by one-/
@@ -83,7 +86,7 @@ begin
 sorry
 end
 
-/--decreasing the length of one chain of a olsle by one changes the value of the game by one-/
+/--deAcreasing the length of one chain of a olsle by one changes the value of the game by one-/
 theorem value_chain_minus_one (G : olsle)(a : ℕ )(P : a ∈ G.chains) (P2 : 4 ≤ a)(G' : olsle) (G' = (one_chain_minus_one G a P P2)) :
 olvalue G' = olvalue G + 1 ∨ olvalue G' = olvalue G - 1 := 
 begin 

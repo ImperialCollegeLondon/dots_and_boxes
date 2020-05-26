@@ -896,3 +896,31 @@ have h : 0 ≤ abs(a),
  exact le_trans h x,
 end
 
+-- put somewhere more sensible?
+theorem abs_abs_sub_abs_le (a b : ℤ) : abs (abs a - abs b) ≤ abs (a - b) :=
+abs_le.2 ⟨by rw [neg_le,neg_sub, abs_sub]; apply sub_abs_le_abs_sub, sub_abs_le_abs_sub a b⟩
+
+theorem sum_list2 (α : Type*) [add_monoid α] (x y : α) : list.sum [x, y] = x + y :=
+begin
+  rw list.sum_cons,
+  rw list.sum_cons,
+  rw list.sum_nil,
+  rw add_zero,
+end
+
+lemma abs_min_sub_min {a b x y d : ℤ} (hab : abs (a - b) ≤ d)
+  (hxy : abs (x - y) ≤ d) : abs (min a x - min b y) ≤ d :=
+begin
+  rw abs_le at *,
+  cases hab; cases hxy,
+  unfold min,
+  split_ifs; split; linarith,
+end
+
+
+theorem list.bind_fin2 {α : Type*} (f : fin 2 → list α) : 
+  list.bind [0, 1] f = f 0 ++ f 1 :=
+begin
+  show f 0 ++ (f 1 ++ nil) = f 0 ++ f 1,
+  rw append_nil,
+end

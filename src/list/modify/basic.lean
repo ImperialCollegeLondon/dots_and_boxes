@@ -4,8 +4,8 @@ import list.lemmas.long_lemmas
 
 open list
 
--- changing one element of a list by at most d
-/--Two lists that are equal except one entry differs by at most d-/
+
+/--Two lists are equal except one entry differs by at most d-/
 structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 (n : ℕ)
 (ha : n < A.length)
@@ -15,7 +15,7 @@ structure list.modify (A : list ℤ) (B : list ℤ) (d : ℤ) :=
 
 
 
-/--Two lists that are equal except one entry differs by at most d have equal length-/
+/--reflexivity of list.modify-/
 theorem list.modify_refl {L : list ℤ } {d : ℤ} (h : 0 < length L) (p : 0 ≤ d): list.modify L L d :=
 { n := 0,
   ha := h,
@@ -31,6 +31,8 @@ theorem list.modify_refl {L : list ℤ } {d : ℤ} (h : 0 < length L) (p : 0 ≤
            end
 }
 
+
+/--Two lists that are equal except one entry differs by at most d have equal length-/
 theorem eq_size_of_modify_list {l1 l2 : list ℤ } {d : ℤ} (h : list.modify l1 l2 d) : l1.length = l2.length :=
 begin
   -- split list.modify condition into its statements
@@ -108,7 +110,7 @@ begin
 end
 
 
-/--list.modify is symmetric-/
+/--symmetry of list.modify-/
 def list.modify.symm (A B : list ℤ) (d : ℤ) 
 (m : list.modify A B d) : list.modify B A d :=
 { n := m.n,
@@ -118,7 +120,8 @@ def list.modify.symm (A B : list ℤ) (d : ℤ)
   bound := by rw [←neg_sub, abs_neg]; exact m.bound
 }
 
-
+/--If you remove the same entry, that is not the modified one from
+both modified lists, you get a modified list-/
 def list.modify_remove_nth {L1 : list ℤ} {L2 : list ℤ} {d : ℤ}
   (h : list.modify L1 L2 d)  (m : ℕ) (h_neq : m ≠ h.n):
   list.modify (remove_nth L1 m) (remove_nth L2 m) d:=

@@ -3,17 +3,6 @@ import tactic.omega tactic.apply
 import sle.lemmas
 import tactic.fin_cases
 
--- put somewhere more sensible?
-theorem abs_abs_sub_abs_le (a b : ℤ) : abs (abs a - abs b) ≤ abs (a - b) :=
-abs_le.2 ⟨by rw [neg_le,neg_sub, abs_sub]; apply sub_abs_le_abs_sub, sub_abs_le_abs_sub a b⟩
-
-theorem sum_list2 (α : Type*) [add_monoid α] (x y : α) : list.sum [x, y] = x + y :=
-begin
-  rw list.sum_cons,
-  rw list.sum_cons,
-  rw list.sum_nil,
-  rw add_zero,
-end
 open list
 
 -- changing one element of a list by at most d
@@ -291,14 +280,6 @@ begin
  exact le_trans R Q,
 end
 
-lemma abs_min_sub_min {a b x y d : ℤ} (hab : abs (a - b) ≤ d)
-  (hxy : abs (x - y) ≤ d) : abs (min a x - min b y) ≤ d :=
-begin
-  rw abs_le at *,
-  cases hab; cases hxy,
-  unfold min,
-  split_ifs; split; linarith,
-end
 
 -- need this for list.min'
 theorem list.min_change (L M : list ℤ) (hL : L ≠ []) (hLM : L.length = M.length) (hM : M ≠ []) (d : ℤ)
@@ -578,7 +559,7 @@ theorem MITM_baby (tf : ℤ) (L1 L2 : list ℤ) (d : ℤ) (h : list.modify L1 L2
 begin
   revert L1 L2,
   induction n with e he,
-    cases i, cases i_is_lt,
+  cases i.is_lt,
   intros L1 L2 h hL1 hL2,
   unfold list.value_i,
   by_cases hin : h.n = i.val,
@@ -597,11 +578,10 @@ begin
     -- apply "lists differ by at most d -> min differs by at most d"
     apply list.min'_change,
       simp only [list.length_of_fn],
-    intros,
     -- now deduce from he somehow!
-    --prove 0 <= d from h using that the asolute value is non-negative
-    cases h, apply le_trans _ h_bound, 
-    show abs (nth_le L1 h_n h_ha - nth_le L2 h_n h_hb) ≥ 0,
+    --prove 0 <= d from h using that the asolute value is non-negative 
+    apply le_trans _ h.bound, 
+    show abs (nth_le L1 h.n h.ha - nth_le L2 h.n h.hb) ≥ 0,
     exact abs_nonneg _,
 
     intros n HnL HnM,
@@ -609,16 +589,16 @@ begin
     --need this as argument for he (in he L1 = (remove_nth L1 (i.val))
     --and L2 = (remove_nth L2 (i.val)))
     rw eq_comm at hin,
-    have P : list.modify (remove_nth L1 (i.val)) (remove_nth L2 (i.val)) d, exact list.modify_remove_nth h i.val hin,
+    have P : list.modify (remove_nth L1 (i.val)) (remove_nth L2 (i.val)) d, 
+    exact list.modify_remove_nth h i.val hin,
     --the point at which both lists will differ is h_n-1 if h_n > i.val
     --and h_n if h_n < i.val
-    cases h,
 
-    rw length_of_fn at HnL HnM,
+    rw length_of_fn at HnL,
     rw nth_le_of_fn _ ⟨n, HnL⟩,
-    rw nth_le_of_fn _ ⟨n, HnM⟩,
-    apply he,
-    exact P,
+    rw nth_le_of_fn _ ⟨n, HnL⟩,
+
+    exact he _ _ _ P _ _,
     }
 end
 
@@ -780,12 +760,7 @@ begin
   exact (nat.add_sub_cancel n 1).symm
 end
 
-theorem list.bind_fin2 {α : Type*} (f : fin 2 → list α) : 
-  list.bind [0, 1] f = f 0 ++ f 1 :=
-begin
-  show f 0 ++ (f 1 ++ nil) = f 0 ++ f 1,
-  rw append_nil,
-end
+
 
 theorem eq_size_of_modify {G1 G2 : game 2} {d : ℤ} (h : game.modify G1 G2 d) : G1.size2 = G2.size2 :=
 begin

@@ -6,11 +6,14 @@ import tactic.fin_cases
 open list
 
 
-/-- abstract game with n types of list as components -/
+/-- abstract game with n types of components, 
+each type represented by a list -/
 structure game (n : ℕ) :=
 (f : fin n → list ℤ)
 
 namespace game
+
+/--extensionality of a game-/
 @[ext] def ext {n : ℕ} (G1 G2 : game n) : (∀ (i : ℕ) (hi : i < n), G1.f ⟨i, hi⟩ = G2.f ⟨i, hi⟩) → G1 = G2 :=
 begin
   intro h,
@@ -33,11 +36,6 @@ def zero (n : ℕ): game n:=
 def size2 (G : game 2) : ℕ := 
 length (G.f (0:fin 2)) + length (G.f (1:fin 2)) 
 
-
-def rec_on_size2' (C : game 2→ Sort*) :
-(∀ G : game 2, G.size2 = 0 → C G) → (∀ n : ℕ, 
-  (∀ G : game 2, G.size2 = n → C G) → (∀ G : game 2, G.size2 = n + 1 → C G)) →
-  ∀ m : ℕ, ∀ G : game 2, G.size2 = m → C G := λ z ih n, nat.rec z ih n
 
 
 /--The number of components of a game-/
@@ -73,8 +71,17 @@ begin
     exact h2,
 end
 
+
+/--used to create a recurser on size2-/
+def rec_on_size2' (C : game 2→ Sort*) :
+(∀ G : game 2, G.size2 = 0 → C G) → (∀ n : ℕ, 
+  (∀ G : game 2, G.size2 = n → C G) → (∀ G : game 2, G.size2 = n + 1 → C G)) →
+  ∀ m : ℕ, ∀ G : game 2, G.size2 = m → C G := λ z ih n, nat.rec z ih n
+
+
 universe u
---@[elab_as_eliminator]
+
+/--recursor on size2-/
 def rec_on_size2 {C : game 2 → Sort u} :
 C (game.zero 2) → (∀ n : ℕ, 
   (∀ G : game 2, G.size2 = n → C G) → (∀ G : game 2, G.size2 = n + 1 → C G)) →
@@ -83,10 +90,12 @@ C (game.zero 2) → (∀ n : ℕ,
 
 
 
-/-- Remove i'th element of j'th component of G -/
+/-- Remove i'th element of j'th component list of G -/
 def remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) : game 2 :=
 {f := λ k, if h : k = j then list.remove_nth (G.f j) i.val else (G.f k)}
 
+
+/--The size of a game with one component removed-/
 lemma size2_remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) :
   (G.remove j i).size2 = G.size2 - 1 :=
 begin
