@@ -35,5 +35,4 @@ else 4
 
 def cv_G (G : simple_loony_endgame) := fcv_G G + tb_G G
 
-inductive v_G (G : simple_loony_endgame)  
-: sorry
+
