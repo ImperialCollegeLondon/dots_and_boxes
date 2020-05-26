@@ -13,6 +13,7 @@ lemma cons_eq_sing_append {α : Type*} {L : list α } (a : α ):
 
 /- bind -/
 
+/--list.bind of two lists is the second appended to the first-/
 theorem list.bind_fin2 {α : Type*} (f : fin 2 → list α) : 
   list.bind [0, 1] f = f 0 ++ f 1 :=
 begin
@@ -22,6 +23,8 @@ end
 
 /- tail -/
 
+/--the tail of a list with the first m elements dropped is that
+list with the first m+1 elements dropped-/
 lemma tail_drop (α : Type*) {A:list α} {m : ℕ} :
 tail (drop m A) = drop (nat.succ m) A :=
 by rw [← drop_one, drop_drop, add_comm]
@@ -40,6 +43,9 @@ end
 lemma drop_zero {α : Type*} {L : list α}: drop 0 L = L := by refl
 
 
+/--If one drops the first n elements of two lists appended to each other and
+   the fist list has length l no longer than n, then this is the same as 
+   dropping the first n-l elements from the second list-/
 lemma drop_append_of_length_le {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
   length l₁ ≤ n → drop n (l₁ ++ l₂) = drop (n - l₁.length) l₂ :=
 begin
@@ -65,7 +71,7 @@ begin
     rw nat.succ_sub_succ n (length L)}  
 end 
 
-
+/--summary of drop_append_of_le_length and drop_append_of_length_le-/
 lemma drop_append {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
   drop n (l₁ ++ l₂) = if n ≤ l₁.length then drop n l₁ ++ l₂ else drop (n - l₁.length) l₂ :=
 begin
@@ -78,6 +84,10 @@ end
 
 /- take -/
 
+/--If one takes the first n elements of two lists appended to each other and
+   the fist list has length l no longer than n, then this is the same as 
+   taking all of the first list and appending the first n-l elements from 
+   the second list-/
 lemma take_append_of_length_le {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
  length l₁ ≤ n →
   take n (l₁ ++ l₂) = l₁ ++ take (n - l₁.length) l₂ :=
@@ -109,6 +119,7 @@ begin
   exact nat.pred_le_iff.mpr
 end
 
+/--summary of  take_append_of_le_length and take_append_of_length_le-/
 lemma take_append {α : Type*} {l₁ l₂ : list α} {n : ℕ} :
 
   take n (l₁ ++ l₂) = 
@@ -123,9 +134,12 @@ end
 
 /- remove_nth -/
 
+/--removing only the 0th element gives the tail-/
 lemma remove_nth_zero {α : Type*} (L : list α) : remove_nth L 0 = tail L :=
 by cases L; refl
 
+/--removing the (n+1)th element gives the 'tail' of the list with 
+   the nth element removed, concatenated to the first element   -/
 lemma remove_nth_succ {α : Type*}  [inhabited α]{n : ℕ} ( L : list α) ( l : α ): 
 remove_nth (l::L) (nat.succ n) = l :: remove_nth L n:=  
 begin
@@ -159,6 +173,8 @@ refl,
 refl,
 end
 
+
+/--If we try to remove an entry outside of the list, we get the unchanged list-/
 lemma remove_nth_large_n {α : Type*}  [inhabited α]{n : ℕ} (L : list α) (h : length L ≤ n): 
 remove_nth L n = L :=
 begin
@@ -247,7 +263,7 @@ begin
   }
 end
 
-
+/--the ith element of of_fn f (if it is in the list) is f(i)-/
 @[simp] theorem nth_le_of_fn' {α : Type*} {n : ℕ} (f : fin n → α)
   (i : ℕ) (hi : i < n) :
   nth_le (of_fn f) i ((length_of_fn f).symm ▸ hi) = f ⟨i, hi⟩ :=
@@ -297,6 +313,7 @@ end
 
 /- sum -/
 
+/--the sum of a two-element list is the sum of its two elements-/
 theorem sum_list2 (α : Type*) [add_monoid α] (x y : α) : list.sum [x, y] = x + y :=
 begin
   rw list.sum_cons,
