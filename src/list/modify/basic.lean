@@ -101,7 +101,7 @@ begin
 
   cases m_cases,
   -- (m+1) ≤ h_n
-  rw take_lemma m_cases h_eq_left, --solves goal as both sides will be the same
+  rw take_aux_2 m_cases h_eq_left, --solves goal as both sides will be the same
                                    --(for the lemma, see list.lemmas.long_lemmas)
 
   -- h_n < (m+1)
@@ -144,7 +144,7 @@ begin
      apply nat.le_pred_of_lt, -- for all m, n in ℕ, if m < n, then m ≤ n - 1
      exact lt_of_le_of_ne' m_cases hmn, -- for all a, b in ℕ, if a ≤ b and a ≠ b, then a < b
 
-   exact drop_lemma h2 h_eq_right, --(for the lemma, see list.lemmas.long_lemmas)
+   exact drop_aux_2 h2 h_eq_right, --(for the lemma, see list.lemmas.long_lemmas)
   },
   rw P,
 
@@ -318,7 +318,6 @@ by_cases hi : m < h_n,
  exact hm,
  },},
 
------------------------------------------------------------------------------
 
  -- hi becomes ¬ (m < h_n)
 {have hx : h_n < m, -- because of hi and our initial assumption that m ≠ h_n
