@@ -9,25 +9,29 @@ open list
 /-- abstract game with n types of components, 
 each type represented by a list -/
 structure game (n : ℕ) :=
-(f : fin n → list ℤ)
+(f : fin n → list ℤ) /- a function from types of components to the
+                        corresponding list of lengths of these components-/
 
 namespace game
 
 /--extensionality of a game-/
-@[ext] def ext {n : ℕ} (G1 G2 : game n) : (∀ (i : ℕ) (hi : i < n), G1.f ⟨i, hi⟩ = G2.f ⟨i, hi⟩) → G1 = G2 :=
+@[ext] theorem ext {n : ℕ} (G1 G2 : game n) : 
+(∀ (i : ℕ) (hi : i < n), G1.f ⟨i, hi⟩ = G2.f ⟨i, hi⟩) → G1 = G2 :=
 begin
   intro h,
-  cases G1, cases G2,
-  rw mk.inj_eq,
-  funext j,
-  cases j with i hi,
-  apply h,
+  cases G1, -- unfold field of G1
+  cases G2, -- unfold field of G2
+  rw mk.inj_eq, -- chages the goal to basically G1.f = G2.f
+  funext j, -- the functions are the same if for all j in fin n, G1.f j = G2.f j
+  cases j with i hi, -- split j ino its fields (which are also i and hi as above)
+  exact h i hi, -- now this is true by our hypothesis
 end
 
 /--the empty game / completed game-/
 def zero (n : ℕ): game n:=
 {
-  f := λ (i : fin n), nil
+  f := λ (i : fin n), nil /- all kinds of components have corresponding 
+                             list of lengths of these components nil -/
 }
 
 
@@ -46,6 +50,9 @@ list.sum (list.of_fn (λ i, (G.f i).length))
 of the size, size and size2, are equivalent-/
 theorem size_eq_size2 (G : game 2) : G.size = G.size2 :=
 begin
+  /- size G is here definitionally equal to 
+  (0 + length (G.f (0:fin 2))) + length (G.f (1:fin 2)),
+  so this just amounts to the addition of 0 cancelling -/
   show (0 + _) + _ = _ + _,
   rw zero_add,
   refl,
@@ -56,19 +63,25 @@ lemma size2_zero : (zero 2).size2 = 0 := rfl
 
 /--If size2 of a game is 0, it is the empty game-/
 lemma eq_zero_of_size2_zero (G : game 2) : G.size2 = 0 → G = zero 2 :=
-begin
+begin 
   intro h,
-  replace h := nat.eq_zero_of_add_eq_zero h,
+  replace h := nat.eq_zero_of_add_eq_zero h, /- replace (basically) length (G.f 0) + length (G.f 1) = 0 
+                                                by length (G.f 0) = 0 ∧ length (G.f 1) = 0 -/
   unfold zero,
-  cases h with h1 h2,
-  rw length_eq_zero at h1 h2,
-  cases G,
+  cases h with h1 h2, 
+  rw length_eq_zero at h1 h2, -- length (G.f j) = 0 ↔ G.f j = nil (j = 0, 1)
+  cases G, --replace G by its field
   apply game.ext,
+  -- from here on we basically need to prove G.f 0 and G.f 1 are both empty
   intros i hi,
   set i0 : fin 2 := ⟨i, hi⟩,
-  fin_cases i0; rw h,
-    exact h1,
-    exact h2,
+  fin_cases i0, -- either i0 is ⟨0, _⟩ or ⟨1, _⟩ as it is of type fin 2
+    -- i0 = ⟨0, _⟩ (so h1 proves the goal)
+    {rw h,
+    exact h1},
+    -- i0 = ⟨1, _⟩ (so h2 proves the goal)
+    { rw h,
+      exact h2},
 end
 
 
@@ -99,33 +112,71 @@ def remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) : game 2 :=
 lemma size2_remove (G : game 2) (j : fin 2) (i : fin (G.f j).length) :
   (G.remove j i).size2 = G.size2 - 1 :=
 begin
-  fin_cases j,
-  { show _ + _ = _ + _ - 1,
+  fin_cases j, -- split into cases for all possible values of j 
+  -- j = ⟨0, _⟩
+  { show _ + _ = _ + _ - 1, -- we basically use the definition of size2 here
     unfold game.remove,
     dsimp,
-    split_ifs,
-    { cases h_1},
-    { rw length_remove_nth _ _ i.is_lt, 
+
+    /- uses definitions to change the goal to :
+       length
+        (dite (0 = ⟨0, _⟩) (λ (h : 0 = ⟨0, _⟩), remove_nth (G.f ⟨0, _⟩) (i.val))
+           (λ (h : ¬0 = ⟨0, _⟩), G.f 0)) +
+       length
+        (dite (1 = ⟨0, _⟩) (λ (h : 1 = ⟨0, _⟩), remove_nth (G.f ⟨0, _⟩) (i.val))
+           (λ (h : ¬1 = ⟨0, _⟩), G.f 1)) =
+       length (G.f 0) + length (G.f 1) - 1-/
+
+    split_ifs with H1 H2 H2, -- split into cases based on the if-conditions
+    -- H1 : 0 = ⟨0, _⟩, H2 : 1 = ⟨0, _⟩
+    { cases H2}, -- H2 is clearly false
+    -- H1 : 0 = ⟨0, _⟩, H2 : ¬ (1 = ⟨0, _⟩)
+    { rw length_remove_nth _ _ i.is_lt, /- as i < length (G.f ⟨0, _⟩), removing index 
+                                           i.val decreases the length by 1 -/
       show length (G.f 0) - 1 + length (G.f 1) = 
         length (G.f 0) + length (G.f 1) - 1,
-      have i2 := i.is_lt,
+      have i2 := i.is_lt, -- i2 is i.val < length (G.f ⟨0, _⟩)  (so we can change and then use this)
       change i.val < length (G.f 0) at i2,
+      /- we replace every occurence of length (G.f 0) by a natural number
+         so we can treat it as such -/
       generalize hm : length (G.f 0) = m,
       rw hm at i2,
+      -- if that length is 0, we get a conradiction as i2 is in ℕ and less than 0
       cases m with m,
+        -- m = 0
         cases i2,
+      -- nat.succ m
       generalize hm2 : length (G.f 1) = m2,
+      /- because nat.succ m ≥ 1 , the goal, nat.succ m - 1 + m2 = nat.succ m + m2 - 1,
+        is just a matter of changing the order. Lean can do this with omega-/
       clear i2 i hm hm2 G,
       omega},
-    { cases h_1},
-    { exfalso, apply h, refl},
+     -- H1 : ¬ (0 = ⟨0, _⟩), H2 : 1 = ⟨0, _⟩
+    { cases H2}, -- H2 is clearly false
+    -- H1 : ¬ (0 = ⟨0, _⟩), H2 : ¬ (1 = ⟨0, _⟩)
+    { exfalso, apply H1, refl}, -- H1 is clearly false (H1 is 0 = ⟨0, _⟩ → false)
   },
+
+  -- j = ⟨1, _⟩
   { show _ + _ = _ + _ - 1,
     unfold game.remove,
     dsimp,
-    split_ifs,
-    { cases h},
-    { cases h},
+
+    /- uses definitions to change the goal to :
+       length
+           (dite (0 = ⟨1, _⟩) (λ (h : 0 = ⟨1, _⟩), remove_nth (G.f ⟨1, _⟩) (i.val))
+           (λ (h : ¬0 = ⟨1, _⟩), G.f 0)) +
+       length
+           (dite (1 = ⟨1, _⟩) (λ (h : 1 = ⟨1, _⟩), remove_nth (G.f ⟨1, _⟩) (i.val))
+           (λ (h : ¬1 = ⟨1, _⟩), G.f 1)) =
+       length (G.f 0) + length (G.f 1) - 1 -/
+
+    split_ifs with H1 H2 H2,
+    -- H1 : 0 = ⟨1, _⟩, H2 : 1 = ⟨1, _⟩
+    { cases H1}, -- H1 is clearly false
+    -- H1 : 0 = ⟨1, _⟩, H2 : ¬ (1 = ⟨1, _⟩)
+    { cases H1}, -- H1 is clearly false
+    -- H1 : ¬ (0 = ⟨1, _⟩), H2 : 1 = ⟨1, _⟩  (similar to above)
     { rw length_remove_nth _ _ i.is_lt,
       show length (G.f 0) + (length (G.f 1) - 1) = 
         length (G.f 0) + length (G.f 1) - 1,
@@ -137,9 +188,12 @@ begin
         cases i2,
       clear i2 i hm hm2 G,
       omega},
-    { exfalso, apply h_1, refl}
+    -- H1 : ¬ (0 = ⟨1, _⟩), H2 : ¬ (1 = ⟨1, _⟩)
+    { exfalso, apply H2, refl} -- H2 gives a contradiction (H2 is 1 = ⟨1, _⟩ → false)
   }
 end
 
 
 end game
+
+
