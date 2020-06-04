@@ -7,4 +7,4 @@ We defined Dots and Boxes endgames containing only loops and chains, the value o
 
 MITM.lean is the formal verification that two games differing in one component by at most d, have values differing by at most d.
 
-list.lemmas.simple and list.lemmas.long_lemmas contain lemmas about lists in Lean that had not been in mathlib at the time I started this project and I. (Some of them might have been added since then) I have been using the version of mathlib corresponding to commit id "324ae4b1a530f96dcf462d4cbf16ce81a3bf1dcd" on "https://github.com/leanprover/mathlib. 
+list.lemmas.simple and list.lemmas.long_lemmas contain lemmas about lists in Lean that had not been in mathlib at the time I started this project. (Some of them might have been added since then) I have been using the version of mathlib corresponding to commit id "324ae4b1a530f96dcf462d4cbf16ce81a3bf1dcd" on https://github.com/leanprover/mathlib. 
